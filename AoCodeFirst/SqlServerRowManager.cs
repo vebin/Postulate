@@ -20,6 +20,8 @@ namespace Postulate
 			InsertCommand = sg.InsertStatement();
 			UpdateCommand = sg.UpdateStatement();
 			DeleteCommand = sg.DeleteStatement();
+
+			string createTbl = sg.CreateTableStatement(withForeignKeys:false);
 		}
 
 		public TRecord Find(TKey id)

@@ -41,5 +41,12 @@ namespace Postulate
 		{
 			throw new NotImplementedException();
 		}
+
+		public override string CreateTableStatement(bool withForeignKeys)
+		{
+			return $@"CREATE TABLE {TableName()} (
+					{string.Join(",\r\n", CreateTableMembers(withForeignKeys))}
+				)\r\nGO";
+		}
 	}
 }

@@ -31,6 +31,6 @@ namespace Postulate.Attributes
 
 		public string ColumnName { get { return _columnName; } }
 
-		public Type PrimaryTable { get { return _primaryTable; } }		
+		public Type PrimaryTableType { get { return _primaryTable; } }		
 	}
 }

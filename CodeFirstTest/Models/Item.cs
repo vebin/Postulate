@@ -14,17 +14,16 @@ namespace CodeFirstTest.Models
 		
 		public string UpcCode { get; set; }
 
-		[MaxLength(255)]
+		[MaxLength(255)]		
 		public string Description { get; set; }
-
-		[Postulate.Validation.RequiredAttribute]
+		
+		[DecimalPrecision(2, 2)]
 		public decimal UnitCost { get; set; }
-		[Postulate.Validation.RequiredAttribute]
+		[DecimalPrecision(2, 2)]
 		public decimal UnitPrice { get; set; }
+		[DecimalPrecision(2, 2)]
 		public decimal QtyOnHand { get; set; }
-		public decimal ReorderQty { get; set; }
-
-		[Postulate.Validation.RequiredAttribute]
-		public DateTime EffectiveDate { get; set; }
+		public decimal ReorderQty { get; set; }		
+		public DateTime? EffectiveDate { get; set; }
 	}
 }

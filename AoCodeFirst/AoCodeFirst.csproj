@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\DecimalPrecisionAttribute.cs" />
     <Compile Include="Attributes\IdentityPositionAttribute.cs" />
     <Compile Include="Validation\IValidateable.cs" />
     <Compile Include="Validation\ValidationAttribute.cs" />
@@ -56,7 +57,6 @@
     <Compile Include="Attributes\InsertExpressionAttribute.cs" />
     <Compile Include="Attributes\InsertPositionAttribute.cs" />
     <Compile Include="Attributes\LargeValueColumn.cs" />
-    <Compile Include="Validation\RequiredAttribute.cs" />
     <Compile Include="Enums\SaveAction.cs" />
     <Compile Include="Enums\PositionEnum.cs" />
     <Compile Include="Attributes\PrimaryKeyAttribute.cs" />

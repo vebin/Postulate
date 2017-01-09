@@ -12,11 +12,11 @@ namespace CodeFirstTest.Models
 		public int OrganizationID { get; set; }
 
 		[MaxLength(50)]
-		[Postulate.Validation.Required]
+		[Required]
 		public string LastName { get; set; }
 
 		[MaxLength(50)]
-		[Postulate.Validation.Required]
+		[Required]
 		public string FirstName { get; set; }
 
 		[MaxLength(50)]		
@@ -36,7 +36,7 @@ namespace CodeFirstTest.Models
 		[Regex(Patterns.Email, "Email address does not appear valid.")]
 		public string Email { get; set; }
 
-		[Postulate.Validation.Required]
+		[Required]
 		public DateTime EffectiveDate { get; set; }
 
 		public IEnumerable<string> Validate(IDbConnection connection = null)
