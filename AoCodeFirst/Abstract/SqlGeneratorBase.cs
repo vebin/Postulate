@@ -106,16 +106,21 @@ namespace Postulate.Abstract
 		public abstract string InsertStatement();
 
 		public abstract string DeleteStatement();
-		
+
+		public abstract string CreateTableStatement(bool withForeignKeys);
+
 		private static bool AllowAccess(PropertyInfo pi, AccessOption option)
 		{
 			if (pi.CanWrite && !pi.Name.Equals(_idColumn) && !pi.GetCustomAttributes<CalculatedAttribute>().Any())
-			{
-				ColumnAccessAttribute attr = null;
-				attr = pi.DeclaringType.GetCustomAttribute<ColumnAccessAttribute>() as ColumnAccessAttribute;
-				if (attr != null && pi.Name.Equals(attr.ColumnName)) return attr.Access == option;
+			{				
+				var attrs = pi.DeclaringType.GetCustomAttributes<ColumnAccessAttribute>();
+				if (attrs != null)
+				{
+					var classAttr = attrs.SingleOrDefault(a => a.ColumnName.Equals(pi.Name));
+					if (classAttr != null) return classAttr.Access == option;
+				}
 
-				attr = pi.GetCustomAttribute<ColumnAccessAttribute>() as ColumnAccessAttribute;
+				var attr = pi.GetCustomAttribute<ColumnAccessAttribute>() as ColumnAccessAttribute;
 				if (attr != null) return attr.Access == option;
 
 				return true;
