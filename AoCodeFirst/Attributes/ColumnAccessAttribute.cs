@@ -1,0 +1,44 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Postulate.Attributes
+{
+	public enum AccessOption
+	{		
+		InsertOnly,		
+		UpdateOnly,
+		ReadOnly
+	}
+
+	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, AllowMultiple = false)]
+	public class ColumnAccessAttribute : Attribute
+	{
+		private readonly string _columnName; // used only in class mode
+		private readonly AccessOption _access;
+
+		/// <summary>
+		/// Describes how a column can be inserted or updated
+		/// </summary>
+		/// <param name="access"></param>
+		public ColumnAccessAttribute(AccessOption access)
+		{
+			_access = access;
+		}
+
+		/// <summary>
+		/// Used with convention classes to describe column access regardless of which table the column appears in
+		/// </summary>
+		public ColumnAccessAttribute(string columnName, AccessOption access)
+		{
+			_columnName = columnName;
+			_access = access;
+		}
+
+		public AccessOption Access { get { return _access; } }
+
+		public string ColumnName { get { return _columnName; } }
+	}
+}
