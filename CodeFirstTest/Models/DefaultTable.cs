@@ -18,13 +18,12 @@ namespace CodeFirstTest.Models
 		}
 
 		[ColumnAccess(AccessOption.InsertOnly)]
-		[InsertExpression("dbo.LocalDateTime(@userName)")]		
+		[InsertExpression("dbo.LocalDateTime(@userName)")]	
 		public DateTime DateCreated { get; set; }
 
 		[MaxLength(20)]		
 		[ColumnAccess(AccessOption.InsertOnly)]
-		[InsertExpression("@userName")]
-		[Required]
+		[InsertExpression("@userName")]		
 		public string CreatedBy { get; set; }		
 
 		[ColumnAccess(AccessOption.UpdateOnly)]

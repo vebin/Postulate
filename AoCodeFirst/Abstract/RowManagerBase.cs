@@ -7,6 +7,7 @@ using System.Data;
 using System.Linq.Expressions;
 using System.Reflection;
 using Postulate.Validation;
+using Postulate.Attributes;
 
 namespace Postulate.Abstract
 {
@@ -64,10 +65,9 @@ namespace Postulate.Abstract
 		{			
 			foreach (var prop in record.GetType().GetProperties())
 			{
-				if (prop.PropertyType.Equals(typeof(DateTime)))
-				{
-					DateTime value = (DateTime)prop.GetValue(record);
-					if (value.Equals(DateTime.MinValue)) yield return $"The {prop.Name} date field requires a value.";
+				if (DateNotSet(prop, record))
+				{					
+					yield return $"The {prop.Name} date field requires a value.";
 				}
 
 				var postulateAttr = prop.GetCustomAttributes<Validation.ValidationAttribute>();
@@ -91,6 +91,20 @@ namespace Postulate.Abstract
 				var errors = validateable.Validate(connection);
 				foreach (var err in errors) yield return err;
 			}
+		}
+
+		private bool DateNotSet(PropertyInfo prop, TRecord record)
+		{
+			if (prop.PropertyType.Equals(typeof(DateTime)))
+			{
+				DateTime value = (DateTime)prop.GetValue(record);
+				if (value.Equals(DateTime.MinValue))
+				{
+					if (record.IsNewRecord() && prop.GetCustomAttribute<InsertExpressionAttribute>() == null) return true;
+					if (!record.IsNewRecord() && prop.GetCustomAttribute<UpdateExpressionAttribute>() == null) return true;
+				}
+			}
+			return false;
 		}
 
 		public void Save(IDbConnection connection, TRecord record)
