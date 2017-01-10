@@ -1,6 +1,6 @@
 # Postulate
 
-**1/10/17** -- I've been interested in ORM libraries for a long time, and I've been resistant to the code-first approach for quite a while as well. "Postulate" represents my attempt to make peace with code-first by doing it My Way. My [Clobber](https://github.com/adamosoftware/Clobber) project, a database-first ORM library, is on hold for now. Here are some design goals and rationales for Postulate:
+**1/10/17** -- I've been interested in ORM libraries for a long time, and I've been resistant to the code-first approach for quite a while as well. "Postulate" represents my attempt to make peace with code-first by doing it My Way. I believe code-first could be a good thing. My [Clobber](https://github.com/adamosoftware/Clobber) project, a database-first ORM library, is on hold for now. Here are some design goals and rationales for Postulate:
 
 - I have never been comfortable with Entity Framework migrations -- I find them simply hard to use, but I also dislike the behavior of silently dropping and rebuilding tables at run time. I would rather implement database changes more deliberately rather than have objects drop and rebuild on their own.
 
