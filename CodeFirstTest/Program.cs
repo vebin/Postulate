@@ -14,22 +14,21 @@ namespace CodeFirstTest
 		{
 			PostulateDb db = new PostulateDb();
 
-			var c = db.Customer.Find(1);
+			/*var c = db.Customer.Find(1);
 			c.Email = "adamosoftware@gmail.com";
-			db.Customer.Save(c, new DynamicParameters(new { userName = "adamo" }));
-			return;
+			db.Customer.Save(c, new DynamicParameters(new { userName = "adamo" }));*/			
 
-			/*Customer c = new Customer();
-			c.FirstName = "Adam";
-			c.LastName = "O'Neil";
-			c.MobilePhone = "864-373-4637";
+			var c = new Customer();
+			c.FirstName = "Becky";
+			c.LastName = "Stanley";
+			c.MobilePhone = "864-706-6885";
 			c.EffectiveDate = DateTime.Today;
 
-			db.Customer.Save(c, new DynamicParameters(new { userName = "adamo" }));
+			db.Customer.Save(c, new { userName = "adamo" });
 
 			Console.WriteLine($"customer id = {c.ID}");
 
-			Console.ReadLine();*/
+			Console.ReadLine();
 		}
 	}
 }

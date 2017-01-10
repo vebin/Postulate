@@ -21,16 +21,16 @@ namespace Postulate.Abstract
 		public abstract TRecord FindWhere(IDbConnection connection, string criteria, object parameters);
 		public abstract IEnumerable<TRecord> Query(IDbConnection connection, string criteria, object parameters, int page = 0);
 
-		protected abstract TKey OnInsert(IDbConnection connection, TRecord record, DynamicParameters parameters = null);
-		protected abstract void OnUpdate(IDbConnection connection, TRecord record, DynamicParameters parameters = null);
+		protected abstract TKey OnInsert(IDbConnection connection, TRecord record, object parameters = null);
+		protected abstract void OnUpdate(IDbConnection connection, TRecord record, object parameters = null);
 
-		public TKey Insert(IDbConnection connection, TRecord record, DynamicParameters parameters = null)
+		public TKey Insert(IDbConnection connection, TRecord record, object parameters = null)
 		{
 			Validate(record, connection);
 			return OnInsert(connection, record, parameters);
 		}		
 
-		public void Update(IDbConnection connection, TRecord record, DynamicParameters parameters = null)
+		public void Update(IDbConnection connection, TRecord record, object parameters = null)
 		{
 			Validate(record, connection);
 			OnUpdate(connection, record, parameters);
@@ -95,13 +95,13 @@ namespace Postulate.Abstract
 			}
 		}		
 
-		public void Save(IDbConnection connection, TRecord record, DynamicParameters parameters = null)
+		public void Save(IDbConnection connection, TRecord record, object parameters = null)
 		{
 			SaveAction action;
 			Save(connection, record, out action, parameters);
 		}
 
-		public void Save(IDbConnection connection, TRecord record, out SaveAction action, DynamicParameters parameters = null)
+		public void Save(IDbConnection connection, TRecord record, out SaveAction action, object parameters = null)
 		{
 			if (record.IsNewRecord())
 			{
@@ -115,7 +115,7 @@ namespace Postulate.Abstract
 			}
 		}
 
-		public bool TrySave(IDbConnection connection, TRecord record, out SaveAction action, out Exception exception, DynamicParameters parameters = null)
+		public bool TrySave(IDbConnection connection, TRecord record, out SaveAction action, out Exception exception, object parameters = null)
 		{
 			exception = null;
 			try
@@ -131,15 +131,15 @@ namespace Postulate.Abstract
 			}
 		}
 
-		public bool TrySave(IDbConnection connection, TRecord record, out Exception exception, DynamicParameters parameters = null)
+		public bool TrySave(IDbConnection connection, TRecord record, out Exception exception, object parameters = null)
 		{
 			SaveAction action;
 			return TrySave(connection, record, out action, out exception, parameters);
 		}
 
-		public abstract void Update(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] setColumns, DynamicParameters parameters = null);
+		public abstract void Update(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] setColumns, object parameters = null);
 		
-		public bool TryUpdate(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] setColumns, out Exception exception, DynamicParameters parameters = null)
+		public bool TryUpdate(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] setColumns, out Exception exception, object parameters = null)
 		{
 			exception = null;
 			try

@@ -59,7 +59,7 @@ namespace Postulate
 			return connection.QueryFirst<TRecord>($"{DefaultQuery} WHERE {criteria}", parameters);
 		}
 
-		public void Save(TRecord record, out SaveAction action, DynamicParameters parameters = null)
+		public void Save(TRecord record, out SaveAction action, object parameters = null)
 		{
 			using (SqlConnection cn = new SqlConnection(_connectionString))
 			{
@@ -68,7 +68,7 @@ namespace Postulate
 			}
 		}
 
-		public void Save(TRecord record, DynamicParameters parameters = null)
+		public void Save(TRecord record, object parameters = null)
 		{
 			SaveAction action;
 			Save(record, out action, parameters);
@@ -83,7 +83,7 @@ namespace Postulate
 			}
 		}
 
-		protected override TKey OnInsert(IDbConnection connection, TRecord record, DynamicParameters parameters = null)
+		protected override TKey OnInsert(IDbConnection connection, TRecord record, object parameters = null)
 		{
 			DynamicParameters dp = new DynamicParameters(record); ;
 			if (parameters != null) dp.AddDynamicParams(parameters);
@@ -99,7 +99,7 @@ namespace Postulate
 			}
 		}
 
-		protected override void OnUpdate(IDbConnection connection, TRecord record, DynamicParameters parameters = null)
+		protected override void OnUpdate(IDbConnection connection, TRecord record, object parameters = null)
 		{
 			DynamicParameters dp = new DynamicParameters(record); ;
 			if (parameters != null) dp.AddDynamicParams(parameters);
@@ -120,7 +120,7 @@ namespace Postulate
 			connection.Execute(DeleteCommand, new { ID = record.ID });
 		}
 
-		public override void Update(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] setColumns, DynamicParameters parameters = null)
+		public override void Update(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] setColumns, object parameters = null)
 		{
 			SqlServerGenerator<TRecord, TKey> sg = new SqlServerGenerator<TRecord, TKey>();
 			//connection.Execute(sg.UpdateStatement(), record);
