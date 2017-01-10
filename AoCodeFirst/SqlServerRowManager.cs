@@ -106,18 +106,20 @@ namespace Postulate
 			connection.Execute(UpdateCommand, dp);
 		}
 
-		public void Delete(TRecord record)
+		public void Delete(TRecord record, object parameters = null)
 		{
 			using (SqlConnection cn = new SqlConnection(_connectionString))
 			{
 				cn.Open();
-				Delete(cn, record);
+				Delete(cn, record, parameters);
 			}
 		}
 
-		public override void Delete(IDbConnection connection, TRecord record)
+		public override void Delete(IDbConnection connection, TRecord record, object parameters = null)
 		{
-			connection.Execute(DeleteCommand, new { ID = record.ID });
+			DynamicParameters dp = new DynamicParameters(parameters);
+			dp.Add("ID", record.ID);
+			connection.Execute(DeleteCommand, dp);
 		}
 
 		public override void Update(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] setColumns, object parameters = null)

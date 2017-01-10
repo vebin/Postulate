@@ -36,7 +36,22 @@ namespace Postulate.Abstract
 			OnUpdate(connection, record, parameters);
 		}
 
-		public abstract void Delete(IDbConnection connection, TRecord record);
+		public abstract void Delete(IDbConnection connection, TRecord record, object parameters = null);
+
+		public bool TryDelete(IDbConnection connection, TRecord record, out Exception exception, object parameters = null)
+		{
+			try
+			{
+				exception = null;
+				Delete(connection, record, parameters);
+				return true;
+			}
+			catch (Exception exc)
+			{
+				exception = exc;
+				return false;
+			}
+		}
 
 		public string DefaultQuery { get; set; }
 		public string FindCommand { get; set; }		
@@ -93,7 +108,7 @@ namespace Postulate.Abstract
 				var errors = validateable.Validate(connection);
 				foreach (var err in errors) yield return err;
 			}
-		}		
+		}
 
 		public void Save(IDbConnection connection, TRecord record, object parameters = null)
 		{
