@@ -64,11 +64,24 @@ namespace Postulate.Abstract
 		{			
 			foreach (var prop in record.GetType().GetProperties())
 			{
-				var attributes = prop.GetCustomAttributes<Validation.ValidationAttribute>();
-				foreach (var attr in attributes)
+				if (prop.PropertyType.Equals(typeof(DateTime)))
+				{
+					DateTime value = (DateTime)prop.GetValue(record);
+					if (value.Equals(DateTime.MinValue)) yield return $"The {prop.Name} date field requires a value.";
+				}
+
+				var postulateAttr = prop.GetCustomAttributes<Validation.ValidationAttribute>();
+				foreach (var attr in postulateAttr)
 				{
 					object value = prop.GetValue(record);
 					if (!attr.IsValid(prop, value, connection)) yield return attr.ErrorMessage;					
+				}
+
+				var validationAttr = prop.GetCustomAttributes<System.ComponentModel.DataAnnotations.ValidationAttribute>();
+				foreach (var attr in validationAttr)
+				{
+					object value = prop.GetValue(record);
+					if (!attr.IsValid(value)) yield return attr.FormatErrorMessage(prop.Name);
 				}
 			}
 

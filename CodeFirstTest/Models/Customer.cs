@@ -35,8 +35,7 @@ namespace CodeFirstTest.Models
 		public string MobilePhone { get; set; }
 		[Regex(Patterns.Email, "Email address does not appear valid.")]
 		public string Email { get; set; }
-
-		[Required]
+		
 		public DateTime EffectiveDate { get; set; }
 
 		public IEnumerable<string> Validate(IDbConnection connection = null)

@@ -45,7 +45,21 @@ namespace Postulate.Abstract
 			if (_squareBraces) result = string.Join(".", result.Split('.').Select(s => $"[{s}]"));
 
 			return result;
-		}		
+		}
+
+		private string TableConstraintName()
+		{
+			Type t = typeof(TRecord);
+			string result = t.Name;
+
+			var attr = t.GetCustomAttribute<TableAttribute>();
+			if (attr != null)
+			{
+				result = (!string.IsNullOrEmpty(attr.Schema) ? attr.Schema : string.Empty) + attr.Name;
+			}
+
+			return result;
+		}
 
 		private string[] GetWriteableColumns(AccessOption option)
 		{
@@ -121,8 +135,6 @@ namespace Postulate.Abstract
 
 			results.AddRange(CreateTableUniqueConstraints());
 
-			//if (withForeignKeys) results.AddRange(CreateTableForeignKeys());
-
 			return results.ToArray();
 		}
 
@@ -170,17 +182,6 @@ namespace Postulate.Abstract
 			string openBrace = (_squareBraces) ? "[" : string.Empty;
 			string closeBrace = (_squareBraces) ? "]" : string.Empty;			
 			return $"CONSTRAINT {openBrace}PK_{TableConstraintName()}{closeBrace} PRIMARY KEY ({string.Join(", ", PrimaryKeyColumns().Select(col => openBrace + col + closeBrace))})";
-		}
-
-		private string TableConstraintName()
-		{
-			Type t = typeof(TRecord);
-			string result = t.Name;
-
-			var attr = t.GetCustomAttribute<TableAttribute>();
-
-
-			return result;
 		}
 
 		private IEnumerable<string> CreateTableColumns()

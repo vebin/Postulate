@@ -16,7 +16,7 @@ namespace CodeFirstTest
 			Customer c = new Customer();
 			c.FirstName = "Adam";
 			c.MobilePhone = "864-373-4637";
-			c.EffectiveDate = DateTime.Today;			
+			//c.EffectiveDate = DateTime.Today;			
 
 			var errors = db.Customer.GetValidationErrors(c);
 			foreach (var err in errors)

@@ -11,7 +11,12 @@ namespace CodeFirstTest.Models
 	[InsertPosition(Position.EndOfTable)]
 	[IdentityPosition(Position.EndOfTable)]
 	public abstract class DefaultTable : DataRecord<int>
-	{		
+	{
+		public DefaultTable()
+		{
+			DateCreated = DateTime.UtcNow;
+		}
+
 		[ColumnAccess(AccessOption.InsertOnly)]
 		[InsertExpression("dbo.LocalDateTime(@userName)")]		
 		public DateTime DateCreated { get; set; }
@@ -19,6 +24,7 @@ namespace CodeFirstTest.Models
 		[MaxLength(20)]		
 		[ColumnAccess(AccessOption.InsertOnly)]
 		[InsertExpression("@userName")]
+		[Required]
 		public string CreatedBy { get; set; }		
 
 		[ColumnAccess(AccessOption.UpdateOnly)]
