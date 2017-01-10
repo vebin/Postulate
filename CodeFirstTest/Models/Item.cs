@@ -1,6 +1,7 @@
 ﻿using Postulate.Attributes;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CodeFirstTest.Models
 {
@@ -24,6 +25,7 @@ namespace CodeFirstTest.Models
 		[DecimalPrecision(2, 2)]
 		public decimal QtyOnHand { get; set; }
 		public decimal ReorderQty { get; set; }		
+		[Column(TypeName = "date")]
 		public DateTime? EffectiveDate { get; set; }
 	}
 }

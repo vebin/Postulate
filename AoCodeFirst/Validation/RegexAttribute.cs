@@ -35,7 +35,7 @@ namespace Postulate.Validation
 		{
 			if (value != null)
 			{
-				return Regex.IsMatch(value.ToString(), _pattern);
+				return Regex.IsMatch(value.ToString(), _pattern, RegexOptions.IgnoreCase);
 			}
 			return true;
 		}

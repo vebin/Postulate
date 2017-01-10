@@ -11,14 +11,16 @@ namespace Postulate.Attributes
 	{
 		private readonly string _columnName;
 		private readonly Type _primaryTable;
+		private readonly bool _cascadeDelete;
 
 		/// <summary>
 		/// At the class level, denotes a foreign key applied to a column with a given name
 		/// </summary>
-		public ForeignKeyAttribute(string columnName, Type primaryTable)
+		public ForeignKeyAttribute(string columnName, Type primaryTable, bool cascadeDelete = false)
 		{
 			_columnName = columnName;
 			_primaryTable = primaryTable;
+			_cascadeDelete = false;
 		}
 
 		/// <summary>
@@ -31,6 +33,8 @@ namespace Postulate.Attributes
 
 		public string ColumnName { get { return _columnName; } }
 
-		public Type PrimaryTableType { get { return _primaryTable; } }		
+		public Type PrimaryTableType { get { return _primaryTable; } }
+
+		public bool CascadeDelete { get { return _cascadeDelete; } }
 	}
 }

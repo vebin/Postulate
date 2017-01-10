@@ -25,11 +25,11 @@ namespace Postulate
 
 		public override string InsertStatement()
 		{
-			return $@"INSERT INTO {TableName()} OUTPUT [inserted].[{_idColumn}] (
+			return $@"INSERT INTO {TableName()} (
 				{string.Join(", ", InsertColumns())}
 			) VALUES (
 				{string.Join(", ", InsertExpressions())}
-			)";
+			);SELECT CAST(SCOPE_IDENTITY() as int)";
 		}
 
 		public override string UpdateStatement()
@@ -42,11 +42,11 @@ namespace Postulate
 			throw new NotImplementedException();
 		}
 
-		public override string CreateTableStatement(bool withForeignKeys)
+		public override string CreateTableStatement(bool withForeignKeys = false)
 		{
 			return $@"CREATE TABLE {TableName()} (
 					{string.Join(",\r\n", CreateTableMembers(withForeignKeys))}
-				)\r\nGO";
+				)";				
 		}
 	}
 }

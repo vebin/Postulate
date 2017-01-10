@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System;
 using System.Data;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CodeFirstTest.Models
 {
@@ -36,6 +37,7 @@ namespace CodeFirstTest.Models
 		[Regex(Patterns.Email, "Email address does not appear valid.")]
 		public string Email { get; set; }
 		
+		[Column(TypeName = "date")]
 		public DateTime EffectiveDate { get; set; }
 
 		public IEnumerable<string> Validate(IDbConnection connection = null)

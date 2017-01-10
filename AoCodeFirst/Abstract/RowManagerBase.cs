@@ -8,6 +8,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Postulate.Validation;
 using Postulate.Attributes;
+using Dapper;
 
 namespace Postulate.Abstract
 {
@@ -15,23 +16,24 @@ namespace Postulate.Abstract
 	{
 		public int RecordsPerPage { get; set; } = 50;
 
+		public abstract bool TableExists(IDbConnection connection);
 		public abstract TRecord Find(IDbConnection connection, TKey id);
 		public abstract TRecord FindWhere(IDbConnection connection, string criteria, object parameters);
 		public abstract IEnumerable<TRecord> Query(IDbConnection connection, string criteria, object parameters, int page = 0);
 
-		protected abstract TKey InsertExecute(IDbConnection connection, TRecord record);
-		protected abstract void UpdateExecute(IDbConnection connection, TRecord record);
+		protected abstract TKey OnInsert(IDbConnection connection, TRecord record, DynamicParameters parameters = null);
+		protected abstract void OnUpdate(IDbConnection connection, TRecord record, DynamicParameters parameters = null);
 
-		public TKey Insert(IDbConnection connection, TRecord record)
+		public TKey Insert(IDbConnection connection, TRecord record, DynamicParameters parameters = null)
 		{
 			Validate(record, connection);
-			return InsertExecute(connection, record);
+			return OnInsert(connection, record, parameters);
 		}		
 
-		public void Update(IDbConnection connection, TRecord record)
+		public void Update(IDbConnection connection, TRecord record, DynamicParameters parameters = null)
 		{
 			Validate(record, connection);
-			UpdateExecute(connection, record);
+			OnUpdate(connection, record, parameters);
 		}
 
 		public abstract void Delete(IDbConnection connection, TRecord record);
@@ -65,7 +67,7 @@ namespace Postulate.Abstract
 		{			
 			foreach (var prop in record.GetType().GetProperties())
 			{
-				if (DateNotSet(prop, record))
+				if (RequiredDateNotSet(prop, record))
 				{					
 					yield return $"The {prop.Name} date field requires a value.";
 				}
@@ -91,9 +93,68 @@ namespace Postulate.Abstract
 				var errors = validateable.Validate(connection);
 				foreach (var err in errors) yield return err;
 			}
+		}		
+
+		public void Save(IDbConnection connection, TRecord record, DynamicParameters parameters = null)
+		{
+			SaveAction action;
+			Save(connection, record, out action, parameters);
 		}
 
-		private bool DateNotSet(PropertyInfo prop, TRecord record)
+		public void Save(IDbConnection connection, TRecord record, out SaveAction action, DynamicParameters parameters = null)
+		{
+			if (record.IsNewRecord())
+			{
+				action = SaveAction.Insert;
+				record.ID = Insert(connection, record, parameters);
+			}
+			else
+			{
+				action = SaveAction.Update;
+				Update(connection, record, parameters);
+			}
+		}
+
+		public bool TrySave(IDbConnection connection, TRecord record, out SaveAction action, out Exception exception, DynamicParameters parameters = null)
+		{
+			exception = null;
+			try
+			{
+				Save(connection, record, out action, parameters);
+				return true;
+			}
+			catch (Exception exc)
+			{
+				action = SaveAction.NotSet;
+				exception = exc;
+				return false;
+			}
+		}
+
+		public bool TrySave(IDbConnection connection, TRecord record, out Exception exception, DynamicParameters parameters = null)
+		{
+			SaveAction action;
+			return TrySave(connection, record, out action, out exception, parameters);
+		}
+
+		public abstract void Update(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] setColumns, DynamicParameters parameters = null);
+		
+		public bool TryUpdate(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] setColumns, out Exception exception, DynamicParameters parameters = null)
+		{
+			exception = null;
+			try
+			{
+				Update(connection, record, setColumns, parameters);
+				return true;
+			}
+			catch (Exception exc)
+			{
+				exception = exc;
+				return false;				
+			}
+		}
+
+		private bool RequiredDateNotSet(PropertyInfo prop, TRecord record)
 		{
 			if (prop.PropertyType.Equals(typeof(DateTime)))
 			{
@@ -105,65 +166,6 @@ namespace Postulate.Abstract
 				}
 			}
 			return false;
-		}
-
-		public void Save(IDbConnection connection, TRecord record)
-		{
-			SaveAction action;
-			Save(connection, record, out action);
-		}
-
-		public void Save(IDbConnection connection, TRecord record, out SaveAction action)
-		{
-			if (record.IsNewRecord())
-			{
-				action = SaveAction.Insert;
-				record.ID = Insert(connection, record);
-			}
-			else
-			{
-				action = SaveAction.Update;
-				Update(connection, record);
-			}
-		}
-
-		public bool TrySave(IDbConnection connection, TRecord record, out SaveAction action, out Exception exception)
-		{
-			exception = null;
-			try
-			{
-				Save(connection, record, out action);
-				return true;
-			}
-			catch (Exception exc)
-			{
-				action = SaveAction.NotSet;
-				exception = exc;
-				return false;
-			}
-		}
-
-		public bool TrySave(IDbConnection connection, TRecord record, out Exception exception)
-		{
-			SaveAction action;
-			return TrySave(connection, record, out action, out exception);
-		}
-
-		public abstract void Update(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] setColumns);
-		
-		public bool TryUpdate(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] expressions, out Exception setColumns)
-		{
-			setColumns = null;
-			try
-			{
-				Update(connection, record, expressions);
-				return true;
-			}
-			catch (Exception exc)
-			{
-				setColumns = exc;
-				return false;				
-			}
 		}
 	}
 }

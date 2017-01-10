@@ -3,20 +3,15 @@ using Postulate.Attributes;
 using Postulate.Enums;
 using System;
 using System.ComponentModel.DataAnnotations;
+using Dapper;
 
 namespace CodeFirstTest.Models
 {
 	[ColumnAccess("OrganizationID", AccessOption.InsertOnly)]
-	[ForeignKey("OrganizationID", typeof(Organization))]
-	[InsertPosition(Position.EndOfTable)]
+	[ForeignKey("OrganizationID", typeof(Organization))]	
 	[IdentityPosition(Position.EndOfTable)]
 	public abstract class DefaultTable : DataRecord<int>
-	{
-		public DefaultTable()
-		{
-			DateCreated = DateTime.UtcNow;
-		}
-
+	{		
 		[ColumnAccess(AccessOption.InsertOnly)]
 		[InsertExpression("dbo.LocalDateTime(@userName)")]	
 		public DateTime DateCreated { get; set; }
@@ -34,10 +29,5 @@ namespace CodeFirstTest.Models
 		[UpdateExpression("@userName")]
 		[MaxLength(20)]
 		public string ModifiedBy { get; set; }
-
-		public string UserName
-		{
-			get { return ModifiedBy ?? CreatedBy; }
-		}
 	}
 }

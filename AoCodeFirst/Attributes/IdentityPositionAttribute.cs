@@ -14,7 +14,7 @@ namespace Postulate.Attributes
 
 		public IdentityPositionAttribute(Position position)
 		{
-			_position = Position;
+			_position = position;
 		}
 
 		public Position Position { get { return _position; } }

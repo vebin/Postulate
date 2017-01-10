@@ -5,6 +5,9 @@ using System.Data.SqlClient;
 using System.Linq.Expressions;
 using Dapper;
 using Postulate.Abstract;
+using System.Reflection;
+using System.ComponentModel.DataAnnotations.Schema;
+using Postulate.Enums;
 
 namespace Postulate
 {
@@ -21,7 +24,11 @@ namespace Postulate
 			UpdateCommand = sg.UpdateStatement();
 			DeleteCommand = sg.DeleteStatement();
 
-			string createTbl = sg.CreateTableStatement(withForeignKeys:false);
+			using (SqlConnection cn = new SqlConnection(_connectionString))
+			{
+				cn.Open();
+				if (!TableExists(cn)) cn.Execute(sg.CreateTableStatement(false));
+			}
 		}
 
 		public TRecord Find(TKey id)
@@ -52,6 +59,21 @@ namespace Postulate
 			return connection.QueryFirst<TRecord>($"{DefaultQuery} WHERE {criteria}", parameters);
 		}
 
+		public void Save(TRecord record, out SaveAction action, DynamicParameters parameters = null)
+		{
+			using (SqlConnection cn = new SqlConnection(_connectionString))
+			{
+				cn.Open();
+				Save(cn, record, out action, parameters);
+			}
+		}
+
+		public void Save(TRecord record, DynamicParameters parameters = null)
+		{
+			SaveAction action;
+			Save(record, out action, parameters);
+		}
+
 		public TKey Insert(TRecord record)
 		{
 			using (SqlConnection cn = new SqlConnection(_connectionString))
@@ -61,9 +83,11 @@ namespace Postulate
 			}
 		}
 
-		protected override TKey InsertExecute(IDbConnection connection, TRecord record)
+		protected override TKey OnInsert(IDbConnection connection, TRecord record, DynamicParameters parameters = null)
 		{
-			return connection.QueryFirst<TKey>(InsertCommand, record);
+			DynamicParameters dp = new DynamicParameters(record); ;
+			if (parameters != null) dp.AddDynamicParams(parameters);
+			return connection.QueryFirst<TKey>(InsertCommand, dp);
 		}
 
 		public void Update(TRecord record)
@@ -75,9 +99,11 @@ namespace Postulate
 			}
 		}
 
-		protected override void UpdateExecute(IDbConnection connection, TRecord record)
+		protected override void OnUpdate(IDbConnection connection, TRecord record, DynamicParameters parameters = null)
 		{
-			connection.Execute(UpdateCommand, record);
+			DynamicParameters dp = new DynamicParameters(record); ;
+			if (parameters != null) dp.AddDynamicParams(parameters);
+			connection.Execute(UpdateCommand, dp);
 		}
 
 		public void Delete(TRecord record)
@@ -94,7 +120,7 @@ namespace Postulate
 			connection.Execute(DeleteCommand, new { ID = record.ID });
 		}
 
-		public override void Update(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] setColumns)
+		public override void Update(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] setColumns, DynamicParameters parameters = null)
 		{
 			SqlServerGenerator<TRecord, TKey> sg = new SqlServerGenerator<TRecord, TKey>();
 			//connection.Execute(sg.UpdateStatement(), record);
@@ -112,6 +138,26 @@ namespace Postulate
 		public override IEnumerable<TRecord> Query(IDbConnection connection, string criteria, object parameters, int page = 0)
 		{
 			throw new NotImplementedException();
+		}
+
+		public bool TableExists()
+		{
+			using (SqlConnection cn = new SqlConnection(_connectionString))
+			{
+				cn.Open();
+				return TableExists(cn);
+			}
+		}
+
+		public override bool TableExists(IDbConnection connection)
+		{
+			Type t = typeof(TRecord);
+			TableAttribute attr = t.GetCustomAttribute<TableAttribute>();			
+			string tableName = (attr != null) ? attr.Name : t.Name;
+			string schema = (attr != null && !string.IsNullOrEmpty(attr.Schema)) ? attr.Schema : "dbo";
+			return (connection.QueryFirstOrDefault<int?>(
+				"SELECT 1 FROM [sys].[tables] WHERE [name]=@name AND SCHEMA_NAME([schema_id])=@schema",
+				new { name = tableName, schema = schema }) ?? 0).Equals(1);
 		}
 	}
 }

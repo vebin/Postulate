@@ -23,9 +23,9 @@ namespace Postulate.Abstract
 			_defaultSchema = defaultSchema;
 		}
 
-		public string TableName()
+		public string TableName(Type tableType = null)
 		{
-			Type t = typeof(TRecord);
+			Type t = (tableType == null) ? typeof(TRecord) : tableType;
 			string result = t.Name;
 
 			TableAttribute attr = t.GetCustomAttribute<TableAttribute>();
@@ -123,9 +123,9 @@ namespace Postulate.Abstract
 
 		public abstract string DeleteStatement();
 
-		public abstract string CreateTableStatement(bool withForeignKeys);
+		public abstract string CreateTableStatement(bool withForeignKeys = false);
 
-		public string[] CreateTableMembers(bool withForeignKeys)
+		public string[] CreateTableMembers(bool withForeignKeys = false)
 		{
 			List<string> results = new List<string>();					
 
@@ -135,7 +135,52 @@ namespace Postulate.Abstract
 
 			results.AddRange(CreateTableUniqueConstraints());
 
+			if (withForeignKeys) results.AddRange(CreateTableForeignKeys());
+
 			return results.ToArray();
+		}
+
+		private IEnumerable<string> CreateTableForeignKeys()
+		{
+			List<string> results = new List<string>();
+
+			Type t = typeof(TRecord);
+			string openBrace = (_squareBraces) ? "[" : string.Empty;
+			string closeBrace = (_squareBraces) ? "]" : string.Empty;
+
+			results.AddRange(t.GetProperties().Where(pi =>
+			{
+				var fk = pi.GetCustomAttribute<Attributes.ForeignKeyAttribute>();
+				return (fk != null);
+			}).Select(pi =>
+			{
+				var fk = pi.GetCustomAttribute<Attributes.ForeignKeyAttribute>();
+				return 
+					$@"CONSTRAINT {openBrace}FK_{TableConstraintName()}_{ColumnName(pi)}{closeBrace} FOREIGN KEY (
+						{openBrace}{ColumnName(pi)}{closeBrace}
+					) REFERENCES {TableName(fk.PrimaryTableType)} (
+						{openBrace}{_idColumn}{closeBrace}
+					)";
+			}));
+
+			results.AddRange(t.GetCustomAttributes<Attributes.ForeignKeyAttribute>()
+				.Where(attr => HasColumnName(t, attr.ColumnName))
+				.Select(fk =>
+				{
+					return
+						$@"CONSTRAINT {openBrace}FK_{TableConstraintName()}_{fk.ColumnName}{closeBrace} FOREIGN KEY (
+							{openBrace}{fk.ColumnName}{closeBrace}
+						) REFERENCES {TableName(fk.PrimaryTableType)} (
+							{openBrace}{_idColumn}{closeBrace}
+						)";
+				}));
+
+			return results;
+		}
+
+		private bool HasColumnName(Type t, string columnName)
+		{
+			return t.GetProperties().Any(pi => pi.Name.ToLower().Equals(columnName.ToLower()));
 		}
 
 		private IEnumerable<string> CreateTableUniqueConstraints()
@@ -200,7 +245,7 @@ namespace Postulate.Abstract
 			if (identityPos == Position.StartOfTable) results.Add(IdentityColumnSql());
 
 			results.AddRange(t.GetProperties()
-				.Where(p => p.CanWrite)
+				.Where(p => p.CanWrite && !p.Name.ToLower().Equals(_idColumn.ToLower()))
 				.Select(pi => $"{openBrace}{ColumnName(pi)}{closeBrace} {SqlTypeFromProperty(pi)}"));
 
 			if (identityPos == Position.EndOfTable) results.Add(IdentityColumnSql());
@@ -247,14 +292,14 @@ namespace Postulate.Abstract
 			string result = pi.Name;
 
 			var attr = pi.GetCustomAttribute<ColumnAttribute>();
-			if (attr != null) result = attr.Name;
+			if (attr != null && !string.IsNullOrEmpty(attr.Name)) result = attr.Name;
 
 			return result;
 		}
 
 		public static string SqlTypeFromProperty(PropertyInfo propertyInfo)
 		{
-			string nullable = ((IsSqlNullable(propertyInfo)) ? "NULL" : "NOT NULL");
+			string nullable = ((AllowSqlNull(propertyInfo)) ? "NULL" : "NOT NULL");
 
 			var attr = propertyInfo.GetCustomAttribute<ColumnAttribute>() as ColumnAttribute;
 			if (attr != null && !string.IsNullOrEmpty(attr.TypeName)) return $"{attr.TypeName} {nullable}";
@@ -294,11 +339,12 @@ namespace Postulate.Abstract
 			return $"{typeMap[t]} {nullable}";
 		}
 
-		private static bool IsSqlNullable(PropertyInfo propertyInfo)
+		private static bool AllowSqlNull(PropertyInfo propertyInfo)
 		{
 			if (InPrimaryKey(propertyInfo)) return false;
 			var required = propertyInfo.GetCustomAttribute<RequiredAttribute>();
-			return (required != null || IsTypeNullable(propertyInfo.PropertyType));
+			if (required != null) return false;
+			return IsTypeNullable(propertyInfo.PropertyType);
 		}
 
 		private static bool InPrimaryKey(PropertyInfo propertyInfo)

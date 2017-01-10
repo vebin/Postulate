@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace CodeFirstTest.Models
 {
-	public class NcmirDb : SqlDb
+	public class PostulateDb : SqlDb
 	{		
-		public NcmirDb() : base("Ncmir")
+		public PostulateDb() : base("PostulateTest")
 		{
 		}
 
