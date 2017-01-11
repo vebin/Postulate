@@ -42,7 +42,7 @@ namespace Postulate
 
 		public override TRecord Find(IDbConnection connection, TKey id)
 		{
-			return connection.QueryFirst<TRecord>(FindCommand, new { id = id });
+			return connection.QueryFirstOrDefault<TRecord>(FindCommand, new { id = id });
 		}
 
 		public TRecord FindWhere(string criteria, object parameters)

@@ -49,6 +49,8 @@
     <Compile Include="Attributes\ColumnDefaultAttribute.cs" />
     <Compile Include="Attributes\DecimalPrecisionAttribute.cs" />
     <Compile Include="Attributes\IdentityPositionAttribute.cs" />
+    <Compile Include="ModelSchemaMerge.cs" />
+    <Compile Include="SqlServerDb.cs" />
     <Compile Include="Validation\IValidateable.cs" />
     <Compile Include="Validation\ValidationAttribute.cs" />
     <Compile Include="Attributes\CalculatedAttribute.cs" />
@@ -63,7 +65,7 @@
     <Compile Include="Attributes\PrimaryKeyAttribute.cs" />
     <Compile Include="Validation\RegexAttribute.cs" />
     <Compile Include="Abstract\DataRecord.cs" />
-    <Compile Include="SqlDb.cs" />
+    <Compile Include="Abstract\SqlDb.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Abstract\SqlGeneratorBase.cs" />
     <Compile Include="SqlServerGenerator.cs" />

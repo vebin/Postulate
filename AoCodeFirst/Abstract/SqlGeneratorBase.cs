@@ -123,6 +123,7 @@ namespace Postulate.Abstract
 
 		public abstract string DeleteStatement();
 
+		#region Create Table
 		public abstract string CreateTableStatement(bool withForeignKeys = false);
 
 		public string[] CreateTableMembers(bool withForeignKeys = false)
@@ -267,6 +268,7 @@ namespace Postulate.Abstract
 
 			return $"{openBrace}{_idColumn}{closeBrace} {typeMap[typeof(TKey)]}";
 		}
+		#endregion			
 
 		private static bool AllowAccess(PropertyInfo pi, AccessOption option)
 		{

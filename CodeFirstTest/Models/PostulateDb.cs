@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CodeFirstTest.Models
 {
-	public class PostulateDb : SqlDb
+	public class PostulateDb : SqlServerDb
 	{		
 		public PostulateDb() : base("PostulateTest")
 		{

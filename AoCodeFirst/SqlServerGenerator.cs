@@ -44,9 +44,10 @@ namespace Postulate
 
 		public override string CreateTableStatement(bool withForeignKeys = false)
 		{
-			return $@"CREATE TABLE {TableName()} (
+			return 
+				$@"CREATE TABLE {TableName()} (
 					{string.Join(",\r\n", CreateTableMembers(withForeignKeys))}
 				)";				
-		}
+		}		
 	}
 }

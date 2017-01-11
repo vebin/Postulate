@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Postulate
 {
-	public class SqlDb
+	public abstract class SqlDb
 	{
 		private readonly string _connectionString;
 
@@ -20,5 +21,7 @@ namespace Postulate
 		{
 			get { return _connectionString; }
 		}
+
+		public abstract IDbConnection GetConnection();
 	}
 }
