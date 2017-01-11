@@ -49,6 +49,7 @@
     <Compile Include="Attributes\ColumnDefaultAttribute.cs" />
     <Compile Include="Attributes\DecimalPrecisionAttribute.cs" />
     <Compile Include="Attributes\IdentityPositionAttribute.cs" />
+    <Compile Include="ConnectionExtensions.cs" />
     <Compile Include="Merge\CreateTable.cs" />
     <Compile Include="Merge\DbObject.cs" />
     <Compile Include="Merge\SchemaMerge.cs" />

@@ -8,8 +8,11 @@ namespace Postulate.Merge
 {
 	public class CreateTable : SchemaMerge.Action
 	{
-		public CreateTable() : base(MergeObjectType.Table, MergeActionType.Create)
+		private readonly Type _modelType;
+
+		public CreateTable(Type modelType) : base(MergeObjectType.Table, MergeActionType.Create)
 		{
+			_modelType = modelType;
 		}
 
 		public override string SqlScript()

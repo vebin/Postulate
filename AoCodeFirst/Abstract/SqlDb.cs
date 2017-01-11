@@ -22,6 +22,6 @@ namespace Postulate
 			get { return _connectionString; }
 		}
 
-		public abstract IDbConnection GetConnection();
+		public abstract IDbConnection GetConnection();		
 	}
 }

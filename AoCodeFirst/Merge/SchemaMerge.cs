@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Dapper;
 
 namespace Postulate.Merge
 {
@@ -25,23 +26,40 @@ namespace Postulate.Merge
 		Delete
 	}
 
+	internal delegate IEnumerable<SchemaMerge.Action> GetSchemaMergeActionHandler(IEnumerable<Type> modelTypes, IDbConnection connection);
+
 	public class SchemaMerge
 	{
 		private readonly List<Action> _actions;
-		private readonly IEnumerable<Type> _modelTypes;
-		private readonly IDbConnection _connection;
 
 		public SchemaMerge(string @namespace, IDbConnection connection)
 		{
-			_connection = connection;
-			_modelTypes = Assembly.GetCallingAssembly().GetTypes()
+			IDbConnection cn = connection;
+			var modelTypes = Assembly.GetCallingAssembly().GetTypes()
 				.Where(t => 
 					t.Namespace.Equals(@namespace) && 
 					!t.IsAbstract &&					
-					(IsDerivedFromGeneric(t, typeof(DataRecord<>))));
+					(IsDerivedFromGeneric(t, typeof(DataRecord<>))));			
+
+			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
+			{
+				GetNewTables, GetNewForeignKeys
+			};
 
 			_actions = new List<Action>();
-			//_actions.AddRange()
+			foreach (var m in methods) _actions.AddRange(m.Invoke(modelTypes, cn));
+		}
+
+		private IEnumerable<Action> GetNewForeignKeys(IEnumerable<Type> modelTypes, IDbConnection connection)
+		{
+			throw new NotImplementedException();
+		}
+
+		public override string ToString()
+		{
+			StringBuilder sb = new StringBuilder();
+			foreach (var action in _actions) sb.Append(action.SqlScript());
+			return sb.ToString();
 		}
 
 		public abstract class Action
@@ -59,6 +77,22 @@ namespace Postulate.Merge
 			public MergeActionType ActionType { get { return _actionType; } }
 
 			public abstract string SqlScript();
+		}
+
+		private IEnumerable<Action> GetNewTables(IEnumerable<Type> modelTypes, IDbConnection cn)
+		{
+			List<Action> actions = new List<Action>();
+
+			foreach (var type in modelTypes)
+			{
+				DbObject obj = DbObject.FromType(type);
+				if (!cn.Exists("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = obj.Schema, name = obj.Name }))
+				{
+					actions.Add(new CreateTable(type));
+				}
+			}
+
+			return actions;
 		}
 
 		// adapted from http://stackoverflow.com/questions/17058697/determining-if-type-is-a-subclass-of-a-generic-type
