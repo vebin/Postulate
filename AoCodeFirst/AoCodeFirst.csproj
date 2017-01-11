@@ -49,7 +49,9 @@
     <Compile Include="Attributes\ColumnDefaultAttribute.cs" />
     <Compile Include="Attributes\DecimalPrecisionAttribute.cs" />
     <Compile Include="Attributes\IdentityPositionAttribute.cs" />
-    <Compile Include="ModelSchemaMerge.cs" />
+    <Compile Include="Merge\CreateTable.cs" />
+    <Compile Include="Merge\DbObject.cs" />
+    <Compile Include="Merge\SchemaMerge.cs" />
     <Compile Include="SqlServerDb.cs" />
     <Compile Include="Validation\IValidateable.cs" />
     <Compile Include="Validation\ValidationAttribute.cs" />

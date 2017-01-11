@@ -1,6 +1,7 @@
 ﻿using CodeFirstTest.Models;
 using Dapper;
 using Postulate;
+using Postulate.Merge;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -18,7 +19,7 @@ namespace CodeFirstTest
 			using (var cn = db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
-				ModelSchemaMerge msm = new ModelSchemaMerge("CodeFirstTest.Models", cn);
+				SchemaMerge merge = new SchemaMerge("CodeFirstTest.Models", cn);
 			}				
 		}
 	}
