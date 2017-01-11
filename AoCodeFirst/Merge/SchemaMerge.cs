@@ -43,11 +43,58 @@ namespace Postulate.Merge
 
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
-				GetNewTables, GetNewForeignKeys
+				GetNewTables, GetNewForeignKeys, GetRenamedTables, GetDeletedTables,
+				GetNewColumns, GetRenamedColumns, GetRetypedColumns, GetDeletedColumns,
+				GetNewPrimaryKeys, GetDeletedForeignKeys, GetDeletedPrimaryKeys
 			};
 
 			_actions = new List<Action>();
 			foreach (var m in methods) _actions.AddRange(m.Invoke(modelTypes, cn));
+		}
+
+		private IEnumerable<Action> GetDeletedPrimaryKeys(IEnumerable<Type> modelTypes, IDbConnection connection)
+		{
+			throw new NotImplementedException();
+		}
+
+		private IEnumerable<Action> GetDeletedForeignKeys(IEnumerable<Type> modelTypes, IDbConnection connection)
+		{
+			throw new NotImplementedException();
+		}
+
+		private IEnumerable<Action> GetNewPrimaryKeys(IEnumerable<Type> modelTypes, IDbConnection connection)
+		{
+			throw new NotImplementedException();
+		}
+
+		private IEnumerable<Action> GetDeletedColumns(IEnumerable<Type> modelTypes, IDbConnection connection)
+		{
+			throw new NotImplementedException();
+		}
+
+		private IEnumerable<Action> GetDeletedTables(IEnumerable<Type> modelTypes, IDbConnection connection)
+		{
+			throw new NotImplementedException();
+		}
+
+		private IEnumerable<Action> GetRetypedColumns(IEnumerable<Type> modelTypes, IDbConnection connection)
+		{
+			throw new NotImplementedException();
+		}
+
+		private IEnumerable<Action> GetRenamedColumns(IEnumerable<Type> modelTypes, IDbConnection connection)
+		{
+			throw new NotImplementedException();
+		}
+
+		private IEnumerable<Action> GetRenamedTables(IEnumerable<Type> modelTypes, IDbConnection connection)
+		{
+			throw new NotImplementedException();
+		}
+
+		private IEnumerable<Action> GetNewColumns(IEnumerable<Type> modelTypes, IDbConnection connection)
+		{
+			throw new NotImplementedException();
 		}
 
 		private IEnumerable<Action> GetNewForeignKeys(IEnumerable<Type> modelTypes, IDbConnection connection)
