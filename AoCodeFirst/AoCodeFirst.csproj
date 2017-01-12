@@ -53,6 +53,7 @@
     <Compile Include="Merge\CreateTable.cs" />
     <Compile Include="Merge\DbObject.cs" />
     <Compile Include="Merge\SchemaMerge.cs" />
+    <Compile Include="PropertyInfoExtensions.cs" />
     <Compile Include="SqlServerDb.cs" />
     <Compile Include="Validation\IValidateable.cs" />
     <Compile Include="Validation\ValidationAttribute.cs" />

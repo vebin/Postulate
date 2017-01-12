@@ -43,9 +43,9 @@ namespace Postulate.Merge
 
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
-				GetNewTables, GetNewForeignKeys, GetRenamedTables, GetDeletedTables,
+				GetNewTables/*, GetNewForeignKeys, GetRenamedTables, GetDeletedTables,
 				GetNewColumns, GetRenamedColumns, GetRetypedColumns, GetDeletedColumns,
-				GetNewPrimaryKeys, GetDeletedForeignKeys, GetDeletedPrimaryKeys
+				GetNewPrimaryKeys, GetDeletedForeignKeys, GetDeletedPrimaryKeys*/
 			};
 
 			_actions = new List<Action>();
@@ -105,7 +105,13 @@ namespace Postulate.Merge
 		public override string ToString()
 		{
 			StringBuilder sb = new StringBuilder();
-			foreach (var action in _actions) sb.Append(action.SqlScript());
+			foreach (var action in _actions)
+			{
+				sb.Append(action.SqlScript());
+				sb.AppendLine();
+				sb.AppendLine("GO");
+				sb.AppendLine();
+			}
 			return sb.ToString();
 		}
 

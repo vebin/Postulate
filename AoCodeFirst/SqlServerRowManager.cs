@@ -27,7 +27,7 @@ namespace Postulate
 			using (SqlConnection cn = new SqlConnection(_connectionString))
 			{
 				cn.Open();
-				if (!TableExists(cn)) cn.Execute(sg.CreateTableStatement(false));
+				//if (!TableExists(cn)) cn.Execute(sg.CreateTableStatement(false));
 			}
 		}
 

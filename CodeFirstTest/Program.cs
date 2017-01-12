@@ -20,7 +20,9 @@ namespace CodeFirstTest
 			{
 				cn.Open();
 				SchemaMerge merge = new SchemaMerge("CodeFirstTest.Models", cn);
-			}				
+				Console.WriteLine(merge.ToString());
+			}
+			Console.ReadLine();
 		}
 	}
 }

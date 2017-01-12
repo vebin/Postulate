@@ -17,10 +17,17 @@ namespace Postulate.Merge
 		{
 			_schema = schema;
 			_name = name;
+			SquareBraces = true;
 		}
 
 		public string Schema { get { return _schema; } }
 		public string Name { get { return _name; } }
+		public bool SquareBraces { get; set; }
+
+		public override string ToString()
+		{			
+			return (SquareBraces) ? $"[{Schema}].[{Name}]" : $"{Schema}.{Name}";
+		}
 
 		public override bool Equals(object obj)
 		{
@@ -50,6 +57,21 @@ namespace Postulate.Merge
 			}
 
 			return new DbObject(schema, name);
+		}
+
+		public static string ConstraintName(Type modelType)
+		{
+			DbObject obj = FromType(modelType);
+			string result = obj.Name;
+			if (!obj.Schema.Equals("dbo")) result = obj.Schema.Substring(0, 1).ToUpper() + obj.Schema.Substring(1).ToLower() + result;
+			return result;
+		}
+
+		public static string SqlServerName(Type modelType)
+		{
+			DbObject obj = FromType(modelType);
+			obj.SquareBraces = true;
+			return obj.ToString();
 		}
 	}
 }
