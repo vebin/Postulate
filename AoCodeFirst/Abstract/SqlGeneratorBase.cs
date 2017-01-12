@@ -1,5 +1,6 @@
 ﻿using Postulate.Attributes;
 using Postulate.Enums;
+using Postulate.Extensions;
 using System;
 using System.Collections;
 using System.Collections.Generic;

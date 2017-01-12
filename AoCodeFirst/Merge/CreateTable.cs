@@ -1,6 +1,7 @@
 ﻿using Postulate.Abstract;
 using Postulate.Attributes;
 using Postulate.Enums;
+using Postulate.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,23 +47,20 @@ namespace Postulate.Merge
 		{
 			List<string> results = new List<string>();
 
-			results.AddRange(_modelType.GetProperties().Where(pi =>
-			{
-				var fk = pi.GetCustomAttribute<ForeignKeyAttribute>();
-				return (fk != null);
-			}).Select(pi =>
-			{
-				var fk = pi.GetCustomAttribute<ForeignKeyAttribute>();
-				return
-					$@"CONSTRAINT [FK_{DbObject.ConstraintName(_modelType)}_{pi.SqlColumnName()}] FOREIGN KEY (
-						[{pi.SqlColumnName()}]
-					) REFERENCES {DbObject.SqlServerName(fk.PrimaryTableType)} (
-						[{nameof(DataRecord<int>.ID)}]
-					)";
-			}));
+			results.AddRange(_modelType.GetProperties().Where(pi => pi.HasAttribute<ForeignKeyAttribute>())
+				.Select(pi =>
+				{
+					var fk = pi.GetCustomAttribute<ForeignKeyAttribute>();
+					return
+						$@"CONSTRAINT [{pi.ForeignKeyName()}] FOREIGN KEY (
+							[{pi.SqlColumnName()}]
+						) REFERENCES {DbObject.SqlServerName(fk.PrimaryTableType)} (
+							[{nameof(DataRecord<int>.ID)}]
+						)";
+				}));
 
 			results.AddRange(_modelType.GetCustomAttributes<ForeignKeyAttribute>()
-				.Where(attr => HasColumnName(attr.ColumnName))
+				.Where(attr => HasColumnName(_modelType, attr.ColumnName))
 				.Select(fk =>
 				{
 					return
@@ -76,9 +74,9 @@ namespace Postulate.Merge
 			return results;
 		}
 
-		private bool HasColumnName(string columnName)
+		public static bool HasColumnName(Type modelType, string columnName)
 		{
-			return _modelType.GetProperties().Any(pi => pi.Name.ToLower().Equals(columnName.ToLower()));
+			return modelType.GetProperties().Any(pi => pi.SqlColumnName().ToLower().Equals(columnName.ToLower()));
 		}
 
 		private IEnumerable<string> CreateTableUniqueConstraints()

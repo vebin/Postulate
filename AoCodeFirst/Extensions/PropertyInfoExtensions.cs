@@ -1,14 +1,13 @@
 ﻿using Postulate.Attributes;
+using Postulate.Merge;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq;
 
-namespace Postulate
+namespace Postulate.Extensions
 {
 	public static class PropertyInfoExtensions
 	{
@@ -62,6 +61,36 @@ namespace Postulate
 			if (t.IsGenericType) t = t.GenericTypeArguments[0];
 
 			return $"{typeMap[t]} {nullable}";
+		}
+
+		public static Attributes.ForeignKeyAttribute GetForeignKeyAttribute(this PropertyInfo propertyInfo)
+		{
+			Attributes.ForeignKeyAttribute fk;
+			if (propertyInfo.HasAttribute(out fk)) return fk;
+
+			fk = propertyInfo.DeclaringType.GetCustomAttributes<Attributes.ForeignKeyAttribute>()
+				.SingleOrDefault(attr => attr.ColumnName.Equals(propertyInfo.Name));
+			if (fk != null) return fk;
+
+			throw new ArgumentException($"The property {propertyInfo.Name} does not have a [ForeignKey] attribute.");
+		}
+
+		public static string ForeignKeyName(this PropertyInfo propertyInfo)
+		{
+			var fk = GetForeignKeyAttribute(propertyInfo);
+			return $"FK_{DbObject.ConstraintName(propertyInfo.DeclaringType)}_{propertyInfo.SqlColumnName()}";
+		}
+
+		public static bool HasAttribute<TAttribute>(this PropertyInfo propertyInfo, out TAttribute attribute) where TAttribute : Attribute
+		{
+			attribute = propertyInfo.GetCustomAttribute<TAttribute>();
+			return (attribute != null);
+		}
+
+		public static bool HasAttribute<TAttribute>(this PropertyInfo propertyInfo) where TAttribute : Attribute
+		{
+			TAttribute attr;
+			return HasAttribute(propertyInfo, out attr);
 		}
 
 		private static bool AllowSqlNull(PropertyInfo propertyInfo)

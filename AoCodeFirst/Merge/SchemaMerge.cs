@@ -1,12 +1,11 @@
 ﻿using Postulate.Abstract;
+using Postulate.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
-using Dapper;
 
 namespace Postulate.Merge
 {
@@ -43,13 +42,47 @@ namespace Postulate.Merge
 
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
-				GetNewTables/*, GetNewForeignKeys, GetRenamedTables, GetDeletedTables,
+				GetNewTables, GetNewForeignKeys/*, GetRenamedTables, GetDeletedTables,
 				GetNewColumns, GetRenamedColumns, GetRetypedColumns, GetDeletedColumns,
 				GetNewPrimaryKeys, GetDeletedForeignKeys, GetDeletedPrimaryKeys*/
 			};
 
 			_actions = new List<Action>();
 			foreach (var m in methods) _actions.AddRange(m.Invoke(modelTypes, cn));
+		}
+
+		private IEnumerable<Action> GetNewTables(IEnumerable<Type> modelTypes, IDbConnection connection)
+		{
+			List<Action> actions = new List<Action>();
+
+			foreach (var type in modelTypes)
+			{
+				DbObject obj = DbObject.FromType(type);
+				if (!connection.Exists("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = obj.Schema, name = obj.Name }))
+				{
+					actions.Add(new CreateTable(type));
+				}
+			}
+
+			return actions;
+		}
+
+		private IEnumerable<Action> GetNewForeignKeys(IEnumerable<Type> modelTypes, IDbConnection connection)
+		{
+			List<Action> actions = new List<Action>();
+
+			foreach (var t in modelTypes)
+			{
+				foreach (var pi in CreateForeignKey.GetForeignKeys(t))
+				{
+					if (!connection.Exists("[sys].[foreign_keys] WHERE [name]=@name", new { name = pi.ForeignKeyName() }))
+					{
+						actions.Add(new CreateForeignKey(pi));
+					}
+				}				
+			}
+
+			return actions;
 		}
 
 		private IEnumerable<Action> GetDeletedPrimaryKeys(IEnumerable<Type> modelTypes, IDbConnection connection)
@@ -97,11 +130,6 @@ namespace Postulate.Merge
 			throw new NotImplementedException();
 		}
 
-		private IEnumerable<Action> GetNewForeignKeys(IEnumerable<Type> modelTypes, IDbConnection connection)
-		{
-			throw new NotImplementedException();
-		}
-
 		public override string ToString()
 		{
 			StringBuilder sb = new StringBuilder();
@@ -130,22 +158,6 @@ namespace Postulate.Merge
 			public MergeActionType ActionType { get { return _actionType; } }
 
 			public abstract string SqlScript();
-		}
-
-		private IEnumerable<Action> GetNewTables(IEnumerable<Type> modelTypes, IDbConnection cn)
-		{
-			List<Action> actions = new List<Action>();
-
-			foreach (var type in modelTypes)
-			{
-				DbObject obj = DbObject.FromType(type);
-				if (!cn.Exists("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = obj.Schema, name = obj.Name }))
-				{
-					actions.Add(new CreateTable(type));
-				}
-			}
-
-			return actions;
 		}
 
 		// adapted from http://stackoverflow.com/questions/17058697/determining-if-type-is-a-subclass-of-a-generic-type
