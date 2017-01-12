@@ -103,8 +103,7 @@ namespace Postulate.Extensions
 
 		private static bool InPrimaryKey(PropertyInfo propertyInfo)
 		{
-			var pk = propertyInfo.GetCustomAttribute<PrimaryKeyAttribute>();
-			return (pk != null);
+			return propertyInfo.HasAttribute<PrimaryKeyAttribute>();
 		}
 	}
 }
