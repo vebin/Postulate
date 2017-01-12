@@ -1,4 +1,4 @@
-# Postulate
+# Postulate ORM
 
 **1/10/17** -- I've been interested in ORM libraries for a long time, and I've been resistant to the code-first approach for quite a while as well. "Postulate" represents my attempt to make peace with code-first by doing it My Way. I believe code-first could be a good thing. My [Clobber](https://github.com/adamosoftware/Clobber) project, a database-first ORM library, is on hold for now. Here are some design goals and rationales for Postulate:
 
