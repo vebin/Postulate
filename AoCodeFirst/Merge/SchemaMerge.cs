@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Dapper;
+using System.ComponentModel.DataAnnotations;
 
 namespace Postulate.Merge
 {
@@ -63,7 +64,18 @@ namespace Postulate.Merge
 
 		public void Execute(IDbConnection connection)
 		{
+			if (_actions.Any(a => !a.IsValid()))
+			{
+				string message = string.Join("\r\n", ValidationErrors());					
+				throw new ValidationException($"The model has one or more validation errors:\r\n{message}");
+			}
+
 			foreach (var a in _actions) connection.Execute(a.SqlScript());
+		}
+
+		public IEnumerable<string> ValidationErrors()
+		{
+			return _actions.Where(a => !a.IsValid()).SelectMany(a => a.ValidationErrors(), (a, m) => $"{a.ToString()}: {m}");
 		}
 
 		private IEnumerable<Action> GetNewTables(IEnumerable<Type> modelTypes, IDbConnection connection)
@@ -162,15 +174,29 @@ namespace Postulate.Merge
 		{
 			private readonly MergeObjectType _objectType;
 			private readonly MergeActionType _actionType;
+			private readonly string _name;
 
-			public Action(MergeObjectType objectType, MergeActionType actionType)
+			public Action(MergeObjectType objectType, MergeActionType actionType, string name)
 			{
 				_objectType = objectType;
 				_actionType = actionType;
+				_name = name;
 			}
 
 			public MergeObjectType ObjectType { get { return _objectType; } }
 			public MergeActionType ActionType { get { return _actionType; } }
+
+			public abstract IEnumerable<string> ValidationErrors();
+
+			public bool IsValid()
+			{
+				return !ValidationErrors().Any();
+			}
+
+			public override string ToString()
+			{
+				return $"{_actionType} {_objectType}: {_name}";
+			}
 
 			public abstract string SqlScript();
 		}

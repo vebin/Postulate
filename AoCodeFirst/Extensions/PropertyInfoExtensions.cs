@@ -98,18 +98,13 @@ namespace Postulate.Extensions
 			if (InPrimaryKey(propertyInfo)) return false;
 			var required = propertyInfo.GetCustomAttribute<RequiredAttribute>();
 			if (required != null) return false;
-			return IsTypeNullable(propertyInfo.PropertyType);
+			return propertyInfo.PropertyType.IsNullable();
 		}
 
 		private static bool InPrimaryKey(PropertyInfo propertyInfo)
 		{
 			var pk = propertyInfo.GetCustomAttribute<PrimaryKeyAttribute>();
 			return (pk != null);
-		}
-
-		private static bool IsTypeNullable(Type t)
-		{
-			return (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>)) || t.Equals(typeof(string));
 		}
 	}
 }

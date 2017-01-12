@@ -15,7 +15,7 @@ namespace Postulate.Merge
 	{
 		private readonly Type _modelType;
 
-		public CreateTable(Type modelType) : base(MergeObjectType.Table, MergeActionType.Create)
+		public CreateTable(Type modelType) : base(MergeObjectType.Table, MergeActionType.Create, modelType.Name)
 		{
 			_modelType = modelType;
 		}
@@ -107,11 +107,7 @@ namespace Postulate.Merge
 
 		protected IEnumerable<string> PrimaryKeyColumns()
 		{			
-			var pkColumns = _modelType.GetProperties().Where(pi =>
-			{
-				var pkAttr = pi.GetCustomAttribute<PrimaryKeyAttribute>();
-				return (pkAttr != null);
-			}).Select(pi => pi.SqlColumnName());
+			var pkColumns = _modelType.GetProperties().Where(pi => pi.HasAttribute<PrimaryKeyAttribute>()).Select(pi => pi.SqlColumnName());
 
 			if (pkColumns.Any()) return pkColumns;
 
@@ -155,6 +151,31 @@ namespace Postulate.Merge
 			Type keyType = (_modelType.IsGenericType) ? _modelType.GetGenericArguments()[0] : typeof(int);			
 
 			return $"[{nameof(DataRecord<int>.ID)}] {typeMap[keyType]}";
+		}
+
+		public override IEnumerable<string> ValidationErrors()
+		{
+			foreach (var pi in _modelType.GetProperties().Where(pi => (pi.HasAttribute<PrimaryKeyAttribute>())))
+			{
+				if (pi.SqlColumnType().ToLower().Contains("char(max)")) yield return $"Primary key column [{pi.Name}] may not use MAX size.";
+				if (pi.PropertyType.IsNullableGeneric()) yield return $"Primary key column [{pi.Name}] may not be nullable.";
+			}
+			
+			foreach (var pi in _modelType.GetProperties().Where(pi => (pi.HasAttribute<UniqueKeyAttribute>())))
+			{
+				if (pi.SqlColumnType().ToLower().Contains("char(max)")) yield return $"Unique column [{pi.Name}] may not use MAX size.";
+			}
+
+			// class-level unique with MAX
+			var uniques = _modelType.GetCustomAttributes<UniqueKeyAttribute>();
+			foreach (var u in uniques)
+			{
+				foreach (var col in u.ColumnNames)
+				{
+					PropertyInfo pi = _modelType.GetProperty(col);
+					if (pi.SqlColumnType().ToLower().Contains("char(max)")) yield return $"Unique column [{pi.Name}] may not use MAX size.";
+				}
+			}
 		}
 	}
 }
