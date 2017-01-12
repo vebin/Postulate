@@ -3,9 +3,11 @@ using Postulate.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Dapper;
 
 namespace Postulate.Merge
 {
@@ -49,6 +51,19 @@ namespace Postulate.Merge
 
 			_actions = new List<Action>();
 			foreach (var m in methods) _actions.AddRange(m.Invoke(modelTypes, cn));
+		}
+
+		public void SaveAs(string fileName)
+		{
+			using (StreamWriter writer = File.CreateText(fileName))
+			{
+				writer.Write(ToString());
+			}
+		}
+
+		public void Execute(IDbConnection connection)
+		{
+			foreach (var a in _actions) connection.Execute(a.SqlScript());
 		}
 
 		private IEnumerable<Action> GetNewTables(IEnumerable<Type> modelTypes, IDbConnection connection)

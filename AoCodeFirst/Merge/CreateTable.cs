@@ -23,9 +23,9 @@ namespace Postulate.Merge
 		public override string SqlScript()
 		{
 			return
-				$@"CREATE TABLE {DbObject.SqlServerName(_modelType)} (
-					{string.Join(",\r\n", CreateTableMembers(false))}
-				)";
+				$"CREATE TABLE {DbObject.SqlServerName(_modelType)} (\r\n\t" +
+					string.Join(",\r\n\t", CreateTableMembers(false)) +
+				"\r\n)";
 		}
 
 		public string[] CreateTableMembers(bool withForeignKeys = false)
