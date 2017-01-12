@@ -23,11 +23,11 @@ namespace Postulate.Merge
 		{
 			ForeignKeyAttribute fk = _pi.GetForeignKeyAttribute();
 			return
-				$@"ALTER TABLE {DbObject.SqlServerName(_pi.DeclaringType)} ADD CONSTRAINT [{_pi.ForeignKeyName()}] FOREIGN KEY (
-					[{_pi.SqlColumnName()}]
-				) REFERENCES {DbObject.SqlServerName(fk.PrimaryTableType)} (
-					[{nameof(DataRecord<int>.ID)}]
-				)";
+				$"ALTER TABLE {DbObject.SqlServerName(_pi.DeclaringType)} ADD CONSTRAINT [{_pi.ForeignKeyName()}] FOREIGN KEY (\r\n" +
+					$"\t[{_pi.SqlColumnName()}]\r\n" +
+				$") REFERENCES {DbObject.SqlServerName(fk.PrimaryTableType)} (\r\n" +
+					$"\t[{nameof(DataRecord<int>.ID)}]\r\n" +
+				")";
 		}
 
 		public static IEnumerable<PropertyInfo> GetForeignKeys(Type modelType)
