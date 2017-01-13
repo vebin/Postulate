@@ -15,8 +15,7 @@ namespace Postulate.Abstract
 	public abstract class RowManagerBase<TRecord, TKey> where TRecord : DataRecord<TKey>
 	{
 		public int RecordsPerPage { get; set; } = 50;
-
-		public abstract bool TableExists(IDbConnection connection);
+		
 		public abstract TRecord Find(IDbConnection connection, TKey id);
 		public abstract TRecord FindWhere(IDbConnection connection, string criteria, object parameters);
 		public abstract IEnumerable<TRecord> Query(IDbConnection connection, string criteria, object parameters, int page = 0);

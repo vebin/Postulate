@@ -15,10 +15,7 @@ namespace CodeFirstTest.Models
 
 		public static SqlServerRowManager<LogEntry, Guid> Db
 		{
-			get
-			{
-				return new SqlServerRowManager<LogEntry, Guid>(new PostulateDb());
-			}
+			get { return new SqlServerRowManager<LogEntry, Guid>(new PostulateDb()); }
 		}
 	}
 }

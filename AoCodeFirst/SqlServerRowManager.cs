@@ -135,22 +135,5 @@ namespace Postulate
 		{
 			throw new NotImplementedException();
 		}
-
-		public bool TableExists()
-		{
-			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
-			{
-				cn.Open();
-				return TableExists(cn);
-			}
-		}
-
-		public override bool TableExists(IDbConnection connection)
-		{
-			DbObject obj = DbObject.FromType(typeof(TRecord));
-			return connection.Exists(
-				"[sys].[tables] WHERE [name]=@name AND SCHEMA_NAME([schema_id])=@schema",
-				new { schema = obj.Schema, name = obj.Name });
-		}
 	}
 }

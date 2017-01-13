@@ -11,6 +11,11 @@ namespace CodeFirstTest.Models
 	{		
 		public PostulateDb() : base("PostulateTest")
 		{
-		}		
+		}
+
+		protected override void Initializing()
+		{
+			MergeSchema(typeof(PostulateDb));
+		}
 	}
 }

@@ -1,4 +1,5 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
 using System.Data;
 
 namespace Postulate
@@ -10,6 +11,7 @@ namespace Postulate
 		public SqlDb(string connectionName)
 		{
 			_connectionString = ConfigurationManager.ConnectionStrings[connectionName].ConnectionString;
+			Initializing();
 		}
 
 		protected string ConnectionString
@@ -17,6 +19,13 @@ namespace Postulate
 			get { return _connectionString; }
 		}
 
-		public abstract IDbConnection GetConnection();				
+		public abstract IDbConnection GetConnection();
+
+		protected virtual void Initializing()
+		{
+		}
+
+		protected abstract void MergeSchema(Type dbType);
+		protected abstract void MergeSchema(string @namespace);
 	}
 }
