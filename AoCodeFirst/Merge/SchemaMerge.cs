@@ -212,6 +212,8 @@ namespace Postulate.Merge
 				_message = message;
 			}
 
+			public Action Action { get { return _action; } }
+
 			public override string ToString()
 			{
 				return $"{_action.ToString()}: {_message}";
