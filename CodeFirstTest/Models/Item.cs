@@ -10,10 +10,10 @@ namespace CodeFirstTest.Models
 	{
 		[PrimaryKey]
 		public int OrganizationID { get; set; }
-		[PrimaryKey]
-		[MaxLength(100)]
+		[PrimaryKey]		
+		[MaxLength(100)]		
 		public string Name { get; set; }
-		
+
 		[MaxLength(50)]
 		public string UpcCode { get; set; }
 

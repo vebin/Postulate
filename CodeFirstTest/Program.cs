@@ -21,9 +21,14 @@ namespace CodeFirstTest
 				cn.Open();
 				SchemaMerge merge = new SchemaMerge("CodeFirstTest.Models", cn);
 
+				foreach (var err in merge.ValidationErrors())
+				{
+					Console.WriteLine(err);
+				}
+
 				//Console.WriteLine(merge.ToString());
 				//merge.SaveAs(@"c:\users\adam\desktop\Postulate.sql");
-				merge.Execute(cn);
+				//merge.Execute(cn);
 			}
 			Console.ReadLine();
 		}

@@ -73,9 +73,9 @@ namespace Postulate.Merge
 			foreach (var a in _actions) connection.Execute(a.SqlScript());
 		}
 
-		public IEnumerable<string> ValidationErrors()
+		public IEnumerable<ValidationError> ValidationErrors()
 		{
-			return _actions.Where(a => !a.IsValid()).SelectMany(a => a.ValidationErrors(), (a, m) => $"{a.ToString()}: {m}");
+			return _actions.Where(a => !a.IsValid()).SelectMany(a => a.ValidationErrors(), (a, m) => new ValidationError(a, m));
 		}
 
 		private IEnumerable<Action> GetNewTables(IEnumerable<Type> modelTypes, IDbConnection connection)
@@ -199,6 +199,23 @@ namespace Postulate.Merge
 			}
 
 			public abstract string SqlScript();
+		}
+
+		public class ValidationError
+		{
+			private readonly Action _action;
+			private readonly string _message;
+
+			public ValidationError(Action action, string message)
+			{
+				_action = action;
+				_message = message;
+			}
+
+			public override string ToString()
+			{
+				return $"{_action.ToString()}: {_message}";
+			}
 		}
 
 		// adapted from http://stackoverflow.com/questions/17058697/determining-if-type-is-a-subclass-of-a-generic-type
