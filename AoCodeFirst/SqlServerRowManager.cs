@@ -13,27 +13,21 @@ namespace Postulate
 {
 	public class SqlServerRowManager<TRecord, TKey> : RowManagerBase<TRecord, TKey> where TRecord : DataRecord<TKey>
 	{
-		private readonly string _connectionString;		
+		protected readonly SqlServerDb _db;
 
-		public SqlServerRowManager(string connectionString)
+		public SqlServerRowManager(SqlServerDb db)
 		{
-			_connectionString = connectionString;
+			_db = db;
 			SqlServerGenerator<TRecord, TKey> sg = new SqlServerGenerator<TRecord, TKey>();
 			FindCommand = sg.FindStatement();
 			InsertCommand = sg.InsertStatement();
 			UpdateCommand = sg.UpdateStatement();
 			DeleteCommand = sg.DeleteStatement();
-
-			using (SqlConnection cn = new SqlConnection(_connectionString))
-			{
-				cn.Open();
-				//if (!TableExists(cn)) cn.Execute(sg.CreateTableStatement(false));
-			}
 		}
 
 		public TRecord Find(TKey id)
 		{
-			using (SqlConnection cn = new SqlConnection(_connectionString))
+			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
 				return Find(cn, id);
@@ -47,7 +41,7 @@ namespace Postulate
 
 		public TRecord FindWhere(string criteria, object parameters)
 		{
-			using (SqlConnection cn = new SqlConnection(_connectionString))
+			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
 				return FindWhere(cn, criteria, parameters);
@@ -61,7 +55,7 @@ namespace Postulate
 
 		public void Save(TRecord record, out SaveAction action, object parameters = null)
 		{
-			using (SqlConnection cn = new SqlConnection(_connectionString))
+			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
 				Save(cn, record, out action, parameters);
@@ -76,7 +70,7 @@ namespace Postulate
 
 		public TKey Insert(TRecord record)
 		{
-			using (SqlConnection cn = new SqlConnection(_connectionString))
+			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
 				return Insert(cn, record);
@@ -92,7 +86,7 @@ namespace Postulate
 
 		public void Update(TRecord record)
 		{
-			using (SqlConnection cn = new SqlConnection(_connectionString))
+			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
 				Update(cn, record);
@@ -108,7 +102,7 @@ namespace Postulate
 
 		public void Delete(TRecord record, object parameters = null)
 		{
-			using (SqlConnection cn = new SqlConnection(_connectionString))
+			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
 				Delete(cn, record, parameters);
@@ -130,7 +124,7 @@ namespace Postulate
 
 		public IEnumerable<TRecord> Query(string criteria, object parameters, int page = 0)
 		{
-			using (SqlConnection cn = new SqlConnection(_connectionString))
+			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
 				return Query(cn, criteria, parameters, page);
@@ -144,7 +138,7 @@ namespace Postulate
 
 		public bool TableExists()
 		{
-			using (SqlConnection cn = new SqlConnection(_connectionString))
+			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
 				return TableExists(cn);

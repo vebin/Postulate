@@ -27,9 +27,9 @@ namespace Postulate
 		{
 			return $@"INSERT INTO {TableName()} (
 				{string.Join(", ", InsertColumns())}
-			) VALUES (
+			) OUTPUT [inserted].[ID] VALUES (
 				{string.Join(", ", InsertExpressions())}
-			);SELECT CAST(SCOPE_IDENTITY() as int)";
+			)";
 		}
 
 		public override string UpdateStatement()

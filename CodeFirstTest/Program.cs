@@ -9,8 +9,12 @@ namespace CodeFirstTest
 	{
 		static void Main(string[] args)
 		{
-			PostulateDb db = new PostulateDb();
-			using (var cn = db.GetConnection() as SqlConnection)
+			LogEntry le = new LogEntry() { DateTime = DateTime.Now, Description = "hello from visual studio" };
+			LogEntry.Db.Save(le);
+
+			Console.WriteLine($"ID = {le.ID}");
+
+			/*using (var cn = db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
 				SchemaMerge merge = new SchemaMerge("CodeFirstTest.Models", cn);
@@ -19,7 +23,7 @@ namespace CodeFirstTest
 				//Console.WriteLine(merge.ToString());
 				//merge.SaveAs(@"c:\users\adam\desktop\Postulate.sql");
 				merge.Execute(cn);
-			}
+			}*/
 			Console.ReadLine();
 		}
 	}
