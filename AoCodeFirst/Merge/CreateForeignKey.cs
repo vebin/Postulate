@@ -8,7 +8,7 @@ using Postulate.Abstract;
 
 namespace Postulate.Merge
 {
-	public class CreateForeignKey : SchemaMerge.Action
+	internal class CreateForeignKey : SchemaMerge.Action
 	{
 		private readonly PropertyInfo _pi;
 

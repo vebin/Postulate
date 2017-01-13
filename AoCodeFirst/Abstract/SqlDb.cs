@@ -2,7 +2,7 @@
 using System.Configuration;
 using System.Data;
 
-namespace Postulate
+namespace Postulate.Abstract
 {
 	public abstract class SqlDb
 	{

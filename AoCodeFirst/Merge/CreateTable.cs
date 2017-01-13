@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Postulate.Merge
 {
-	public class CreateTable : SchemaMerge.Action
+	internal class CreateTable : SchemaMerge.Action
 	{
 		private readonly Type _modelType;
 
