@@ -5,9 +5,9 @@ using System.Data.SqlClient;
 using System.Linq.Expressions;
 using Dapper;
 using Postulate.Abstract;
-using System.Reflection;
-using System.ComponentModel.DataAnnotations.Schema;
 using Postulate.Enums;
+using Postulate.Extensions;
+using Postulate.Merge;
 
 namespace Postulate
 {
@@ -147,13 +147,10 @@ namespace Postulate
 
 		public override bool TableExists(IDbConnection connection)
 		{
-			Type t = typeof(TRecord);
-			TableAttribute attr = t.GetCustomAttribute<TableAttribute>();			
-			string tableName = (attr != null) ? attr.Name : t.Name;
-			string schema = (attr != null && !string.IsNullOrEmpty(attr.Schema)) ? attr.Schema : "dbo";
-			return (connection.QueryFirstOrDefault<int?>(
-				"SELECT 1 FROM [sys].[tables] WHERE [name]=@name AND SCHEMA_NAME([schema_id])=@schema",
-				new { name = tableName, schema = schema }) ?? 0).Equals(1);
+			DbObject obj = DbObject.FromType(typeof(TRecord));
+			return connection.Exists(
+				"[sys].[tables] WHERE [name]=@name AND SCHEMA_NAME([schema_id])=@schema",
+				new { schema = obj.Schema, name = obj.Name });
 		}
 	}
 }
