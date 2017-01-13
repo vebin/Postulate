@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Postulate
 {
-	public class SqlServerGenerator<TRecord, TKey> : SqlGeneratorBase<TRecord, TKey> where TRecord : DataRecord<TKey>
+	internal class SqlServerGenerator<TRecord, TKey> : SqlGeneratorBase<TRecord, TKey> where TRecord : DataRecord<TKey>
 	{
 		public SqlServerGenerator() : base(squareBraces:true, defaultSchema:"dbo")
 		{

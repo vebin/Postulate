@@ -17,19 +17,14 @@ namespace Postulate
 			return new SqlConnection(ConnectionString);
 		}
 
-		protected override void MergeSchema(string @namespace)
+		protected override void MergeSchema(Type dbType)
 		{
 			using (SqlConnection cn = GetConnection() as SqlConnection)
 			{
 				cn.Open();
-				SchemaMerge sm = new SchemaMerge(@namespace, cn);
+				SchemaMerge sm = new SchemaMerge(dbType, cn);
 				sm.Execute(cn);
 			}
-		}
-
-		protected override void MergeSchema(Type dbType)
-		{
-			MergeSchema(dbType.Namespace);
 		}
 	}
 }

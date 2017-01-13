@@ -1,5 +1,7 @@
 ﻿using Postulate;
 using Postulate.Abstract;
+using Postulate.Attributes;
+using Postulate.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,14 +10,15 @@ using System.Threading.Tasks;
 
 namespace CodeFirstTest.Models
 {
+	[IdentityPosition(Position.EndOfTable)]
 	public class LogEntry : DataRecord<Guid>
 	{
 		public DateTime DateTime { get; set; }
 		public string Description { get; set; }
 
-		public static SqlServerRowManager<LogEntry, Guid> Db
+		public static SqlServerRowManager<LogEntry, Guid> Db()
 		{
-			get { return new SqlServerRowManager<LogEntry, Guid>(new PostulateDb()); }
+			return new SqlServerRowManager<LogEntry, Guid>(new PostulateDb());
 		}
 	}
 }

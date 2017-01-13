@@ -25,7 +25,6 @@ namespace Postulate.Abstract
 		{
 		}
 
-		protected abstract void MergeSchema(Type dbType);
-		protected abstract void MergeSchema(string @namespace);
+		protected abstract void MergeSchema(Type dbType);		
 	}
 }

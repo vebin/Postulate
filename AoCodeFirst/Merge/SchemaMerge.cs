@@ -34,13 +34,14 @@ namespace Postulate.Merge
 	{
 		private readonly List<Action> _actions;
 
-		public SchemaMerge(string @namespace, IDbConnection connection)
+		public SchemaMerge(Type dbType, IDbConnection connection)
 		{
 			IDbConnection cn = connection;
-			var modelTypes = Assembly.GetCallingAssembly().GetTypes()
+			var modelTypes = dbType.Assembly.GetTypes()
 				.Where(t =>
-					t.Namespace.Equals(@namespace) &&
-					!t.IsAbstract &&
+					!t.Name.StartsWith("<>") &&
+					t.Namespace.Equals(dbType.Namespace) &&					
+					!t.IsAbstract &&					
 					t.IsDerivedFromGeneric(typeof(DataRecord<>)));					
 
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
