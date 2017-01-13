@@ -1,5 +1,4 @@
-﻿using Dapper;
-using System;
+﻿using System;
 
 namespace Postulate.Abstract
 {
