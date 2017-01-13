@@ -10,8 +10,7 @@ namespace Postulate.Abstract
 
 		public SqlDb(string connectionName)
 		{
-			_connectionString = ConfigurationManager.ConnectionStrings[connectionName].ConnectionString;
-			Initializing();
+			_connectionString = ConfigurationManager.ConnectionStrings[connectionName].ConnectionString;			
 		}
 
 		protected string ConnectionString
@@ -21,10 +20,6 @@ namespace Postulate.Abstract
 
 		public abstract IDbConnection GetConnection();
 
-		protected virtual void Initializing()
-		{
-		}
-
-		protected abstract void MergeSchema(Type dbType);		
+		public abstract void MergeSchema();
 	}
 }

@@ -9,6 +9,9 @@ namespace CodeFirstTest
 	{
 		static void Main(string[] args)
 		{
+			PostulateDb db = new PostulateDb();
+			db.MergeSchema();
+
 			LogEntry le = LogEntry.Db().Find(new Guid("12F1A3EB-80D9-E611-BF10-BC8556B08412"));
 			Console.WriteLine(le.Description);
 			Console.ReadLine();
