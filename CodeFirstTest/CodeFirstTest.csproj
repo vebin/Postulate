@@ -52,6 +52,7 @@
     <Compile Include="Models\DefaultTable.cs" />
     <Compile Include="Models\Customer.cs" />
     <Compile Include="Models\Item.cs" />
+    <Compile Include="Models\LogEntry.cs" />
     <Compile Include="Models\PostulateDb.cs" />
     <Compile Include="Models\Organization.cs" />
     <Compile Include="Program.cs" />

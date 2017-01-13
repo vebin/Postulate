@@ -148,9 +148,18 @@ namespace Postulate.Merge
 				{ typeof(Guid), "uniqueidentifier DEFAULT NewSequentialID()" }
 			};
 
-			Type keyType = (_modelType.IsGenericType) ? _modelType.GetGenericArguments()[0] : typeof(int);			
+			Type keyType = FindKeyType(_modelType);
 
 			return $"[{nameof(DataRecord<int>.ID)}] {typeMap[keyType]}";
+		}
+
+		private Type FindKeyType(Type modelType)
+		{
+			if (!modelType.IsDerivedFromGeneric(typeof(DataRecord<>))) throw new ArgumentException("Model class must derive from DataRecord<TKey>");
+
+			Type checkType = modelType;
+			while (!checkType.IsGenericType) checkType = checkType.BaseType;
+			return checkType.GetGenericArguments()[0];			
 		}
 
 		public override IEnumerable<string> ValidationErrors()

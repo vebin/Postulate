@@ -17,5 +17,13 @@ namespace Postulate.Extensions
 		{
 			return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
 		}
+
+		// adapted from http://stackoverflow.com/questions/17058697/determining-if-type-is-a-subclass-of-a-generic-type
+		public static bool IsDerivedFromGeneric(this Type type, Type genericType)
+		{
+			if (type.IsGenericType && type.GetGenericTypeDefinition().Equals(genericType)) return true;
+			if (type.BaseType != null) return IsDerivedFromGeneric(type.BaseType, genericType);
+			return false;
+		}
 	}
 }

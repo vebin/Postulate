@@ -38,10 +38,10 @@ namespace Postulate.Merge
 		{
 			IDbConnection cn = connection;
 			var modelTypes = Assembly.GetCallingAssembly().GetTypes()
-				.Where(t => 
-					t.Namespace.Equals(@namespace) && 
-					!t.IsAbstract &&					
-					(IsDerivedFromGeneric(t, typeof(DataRecord<>))));			
+				.Where(t =>
+					t.Namespace.Equals(@namespace) &&
+					!t.IsAbstract &&
+					t.IsDerivedFromGeneric(typeof(DataRecord<>)));					
 
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
@@ -218,14 +218,6 @@ namespace Postulate.Merge
 			{
 				return $"{_action.ToString()}: {_message}";
 			}
-		}
-
-		// adapted from http://stackoverflow.com/questions/17058697/determining-if-type-is-a-subclass-of-a-generic-type
-		private static bool IsDerivedFromGeneric(Type type, Type genericType)
-		{
-			if (type.IsGenericType && type.GetGenericTypeDefinition().Equals(genericType)) return true;
-			if (type.BaseType != null) return IsDerivedFromGeneric(type.BaseType, genericType);
-			return false;
 		}
 	}
 }
