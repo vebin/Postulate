@@ -7,25 +7,25 @@ using Dapper;
 
 namespace CodeFirstTest.Models
 {
-	[ColumnAccess("OrganizationID", AccessOption.InsertOnly)]
+	[ColumnAccess("OrganizationID", Access.InsertOnly)]
 	[ForeignKey("OrganizationID", typeof(Organization))]	
 	[IdentityPosition(Position.EndOfTable)]
 	public abstract class DefaultTable : DataRecord<int>
 	{		
-		[ColumnAccess(AccessOption.InsertOnly)]
+		[ColumnAccess(Access.InsertOnly)]
 		[InsertExpression("dbo.LocalDateTime(@userName)")]	
 		public DateTime DateCreated { get; set; }
 
 		[MaxLength(20)]		
-		[ColumnAccess(AccessOption.InsertOnly)]
+		[ColumnAccess(Access.InsertOnly)]
 		[InsertExpression("@userName")]		
 		public string CreatedBy { get; set; }		
 
-		[ColumnAccess(AccessOption.UpdateOnly)]
+		[ColumnAccess(Access.UpdateOnly)]
 		[UpdateExpression("dbo.LocalDateTime(@userName)")]
 		public DateTime? DateModified { get; set; }
 
-		[ColumnAccess(AccessOption.UpdateOnly)]
+		[ColumnAccess(Access.UpdateOnly)]
 		[UpdateExpression("@userName")]
 		[MaxLength(20)]
 		public string ModifiedBy { get; set; }

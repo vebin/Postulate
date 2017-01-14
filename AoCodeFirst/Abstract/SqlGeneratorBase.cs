@@ -62,12 +62,12 @@ namespace Postulate.Abstract
 			return result;
 		}
 
-		private string[] GetWriteableColumns(AccessOption option)
+		private string[] GetWriteableColumns(Access option)
 		{
 			return GetWriteableProperties(option).Select(p => p.Name).ToArray();			
 		}
 
-		private IEnumerable<PropertyInfo> GetWriteableProperties(AccessOption option)
+		private IEnumerable<PropertyInfo> GetWriteableProperties(Access option)
 		{
 			Type t = typeof(TRecord);
 			return t.GetProperties().Where(p => AllowAccess(p, option));
@@ -88,14 +88,14 @@ namespace Postulate.Abstract
 
 		public string[] InsertColumns()
 		{
-			var result = GetWriteableColumns(AccessOption.InsertOnly);
+			var result = GetWriteableColumns(Access.InsertOnly);
 			if (_squareBraces) return result.Select(s => $"[{s}]").ToArray();
 			return result;
 		}
 
 		public string[] InsertExpressions()
 		{			
-			return GetWriteableProperties(AccessOption.InsertOnly).Select(pi =>
+			return GetWriteableProperties(Access.InsertOnly).Select(pi =>
 			{
 				var expr = pi.GetCustomAttribute<InsertExpressionAttribute>() as InsertExpressionAttribute;
 				if (expr != null) return expr.Expression;
@@ -105,7 +105,7 @@ namespace Postulate.Abstract
 
 		public string[] UpdateExpressions()
 		{
-			return GetWriteableProperties(AccessOption.UpdateOnly).Select(pi =>
+			return GetWriteableProperties(Access.UpdateOnly).Select(pi =>
 			{
 				string result = (_squareBraces) ? $"[{pi.SqlColumnName()}]" : pi.SqlColumnName();
 				var expr = pi.GetCustomAttributes(typeof(UpdateExpressionAttribute)).FirstOrDefault() as UpdateExpressionAttribute;
@@ -124,7 +124,7 @@ namespace Postulate.Abstract
 
 		public abstract string DeleteStatement();
 
-		private static bool AllowAccess(PropertyInfo pi, AccessOption option)
+		private static bool AllowAccess(PropertyInfo pi, Access option)
 		{
 			if (pi.CanWrite && !pi.Name.Equals(_idColumn) && !pi.GetCustomAttributes<CalculatedAttribute>().Any())
 			{				

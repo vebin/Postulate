@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Postulate.Attributes
 {
-	public enum AccessOption
+	public enum Access
 	{		
 		InsertOnly,		
 		UpdateOnly,
@@ -17,13 +17,13 @@ namespace Postulate.Attributes
 	public class ColumnAccessAttribute : Attribute
 	{
 		private readonly string _columnName; // used only in class mode
-		private readonly AccessOption _access;
+		private readonly Access _access;
 
 		/// <summary>
 		/// Describes how a column can be inserted or updated
 		/// </summary>
 		/// <param name="access"></param>
-		public ColumnAccessAttribute(AccessOption access)
+		public ColumnAccessAttribute(Access access)
 		{
 			_access = access;
 		}
@@ -31,13 +31,13 @@ namespace Postulate.Attributes
 		/// <summary>
 		/// Used with convention classes to describe column access regardless of which table the column appears in
 		/// </summary>
-		public ColumnAccessAttribute(string columnName, AccessOption access)
+		public ColumnAccessAttribute(string columnName, Access access)
 		{
 			_columnName = columnName;
 			_access = access;
 		}
 
-		public AccessOption Access { get { return _access; } }
+		public Access Access { get { return _access; } }
 
 		public string ColumnName { get { return _columnName; } }
 	}
