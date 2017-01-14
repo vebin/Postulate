@@ -85,7 +85,7 @@ namespace Postulate.Merge
 
 			if (PrimaryKeyColumns().Any())
 			{
-				results.Add($"CONSTRAINT [U_{DbObject.ConstraintName(_modelType)}_ID] UNIQUE ([ID])");
+				results.Add($"CONSTRAINT [U_{DbObject.ConstraintName(_modelType)}_Id] UNIQUE ([Id])");
 			}
 
 			results.AddRange(_modelType.GetProperties().Where(pi =>
@@ -99,7 +99,8 @@ namespace Postulate.Merge
 
 			results.AddRange(_modelType.GetCustomAttributes<UniqueKeyAttribute>().Select((u, i) =>
 			{
-				return $"CONSTRAINT [U_{DbObject.ConstraintName(_modelType)}_{i}] UNIQUE ({string.Join(", ", u.ColumnNames.Select(col => $"[{col}]"))})";
+				string constrainName = (string.IsNullOrEmpty(u.ConstraintName)) ? $"{DbObject.ConstraintName(_modelType)}_{i}" : u.ConstraintName;
+				return $"CONSTRAINT [U_{constrainName}] UNIQUE ({string.Join(", ", u.ColumnNames.Select(col => $"[{col}]"))})";
 			}));
 
 			return results;

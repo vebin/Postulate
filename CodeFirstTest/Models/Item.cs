@@ -5,7 +5,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CodeFirstTest.Models
 {
-	[UniqueKey(nameof(OrganizationID), nameof(UpcCode))]
+	//[UniqueKey(nameof(OrganizationID), nameof(UpcCode))]
+	[UniqueKey("U_Item_OrgUpc", new string[] { nameof(OrganizationID), nameof(UpcCode) })]
 	public class Item : DefaultTable
 	{
 		[PrimaryKey]

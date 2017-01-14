@@ -10,6 +10,7 @@ namespace Postulate.Attributes
 	public class UniqueKeyAttribute : Attribute
 	{
 		private readonly string[] _columnNames;
+		private readonly string _constraintName;
 
 		/// <summary>
 		/// Denotes a unique constraint on a single property
@@ -26,6 +27,17 @@ namespace Postulate.Attributes
 			_columnNames = columnNames;
 		}
 
+		/// <summary>
+		/// At the class level, describes a unique constraint with a given name and set of columns
+		/// </summary>
+		public UniqueKeyAttribute(string constraintName, string[] columnNames)
+		{
+			_columnNames = columnNames;
+			_constraintName = constraintName;
+		}
+
 		public string[] ColumnNames { get { return _columnNames; } }
+
+		public string ConstraintName { get { return _constraintName; } }
 	}
 }
