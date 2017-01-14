@@ -73,7 +73,12 @@ namespace Postulate.Merge
 
 			foreach (var a in _actions)
 			{
-				foreach (var cmd in a.SqlCommands()) connection.Execute(cmd);
+				Console.WriteLine(a.ToString());
+				foreach (var cmd in a.SqlCommands())
+				{					
+					Console.WriteLine($"\t{cmd}");
+					connection.Execute(cmd);
+				}
 			}
 		}
 
