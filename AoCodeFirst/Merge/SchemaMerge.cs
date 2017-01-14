@@ -46,7 +46,7 @@ namespace Postulate.Merge
 
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
-				GetNewTables, GetNewForeignKeys/*, GetRenamedTables, GetDeletedTables,
+				GetNewTables, GetDeletedTables, GetNewForeignKeys/*, GetRenamedTables,
 				GetNewColumns, GetRenamedColumns, GetRetypedColumns, GetDeletedColumns,
 				GetNewPrimaryKeys, GetDeletedForeignKeys, GetDeletedPrimaryKeys*/
 			};
@@ -71,7 +71,10 @@ namespace Postulate.Merge
 				throw new ValidationException($"The model has one or more validation errors:\r\n{message}");
 			}
 
-			foreach (var a in _actions) connection.Execute(a.SqlScript());
+			foreach (var a in _actions)
+			{
+				foreach (var cmd in a.SqlCommands()) connection.Execute(cmd);
+			}
 		}
 
 		public IEnumerable<ValidationError> ValidationErrors()
@@ -135,7 +138,28 @@ namespace Postulate.Merge
 
 		private IEnumerable<Action> GetDeletedTables(IEnumerable<Type> modelTypes, IDbConnection connection)
 		{
-			throw new NotImplementedException();
+			List<Action> results = new List<Action>();
+
+			var allTables = connection.Query(
+				"SELECT SCHEMA_NAME([schema_id]) AS [Schema], [name] AS [TableName], [object_id] AS [ObjectID] FROM [sys].[tables]");
+			var deletedTables = allTables.Where(tbl => !modelTypes.Any(modelType =>
+			{
+				var obj = DbObject.FromType(modelType);
+				return obj.Schema.Equals(tbl.Schema) && obj.Name.Equals(tbl.TableName);
+			}));
+							
+			Func<int, DropTable.ForeignKeyRef[]> getDependentFKs = (int objectID) =>
+			{				
+				var dependentFKs = connection.Query(
+					@"SELECT [fk].[name] AS [ConstraintName], SCHEMA_NAME([tbl].[schema_id]) AS [ReferencingSchema], [tbl].[name] AS [ReferencingTable] 
+					FROM [sys].[foreign_keys] [fk] INNER JOIN [sys].[tables] [tbl] ON [fk].[parent_object_id]=[tbl].[object_id] 
+					WHERE [referenced_object_id]=@objID", new { objID = objectID });
+				return dependentFKs.Select(fk => new DropTable.ForeignKeyRef() { ConstraintName = fk.ConstraintName, ReferencingTable = new DbObject(fk.ReferencingSchema, fk.ReferencingTable) }).ToArray();
+			};
+
+			results.AddRange(deletedTables.Select(del => new DropTable(new DbObject(del.Schema, del.TableName), getDependentFKs(del.ObjectID))));
+
+			return results;
 		}
 
 		private IEnumerable<Action> GetRetypedColumns(IEnumerable<Type> modelTypes, IDbConnection connection)
@@ -163,7 +187,7 @@ namespace Postulate.Merge
 			StringBuilder sb = new StringBuilder();
 			foreach (var action in _actions)
 			{
-				sb.Append(action.SqlScript());
+				sb.Append(action.SqlCommands());
 				sb.AppendLine();
 				sb.AppendLine("GO");
 				sb.AppendLine();
@@ -199,7 +223,7 @@ namespace Postulate.Merge
 				return $"{_actionType} {_objectType}: {_name}";
 			}
 
-			public abstract string SqlScript();
+			public abstract IEnumerable<string> SqlCommands();
 		}
 
 		public class ValidationError

@@ -17,10 +17,10 @@ namespace Postulate.Merge
 			_pi = propertyInfo;
 		}
 
-		public override string SqlScript()
+		public override IEnumerable<string> SqlCommands()
 		{
 			ForeignKeyAttribute fk = _pi.GetForeignKeyAttribute();
-			return
+			yield return
 				$"ALTER TABLE {DbObject.SqlServerName(_pi.DeclaringType)} ADD CONSTRAINT [{_pi.ForeignKeyName()}] FOREIGN KEY (\r\n" +
 					$"\t[{_pi.SqlColumnName()}]\r\n" +
 				$") REFERENCES {DbObject.SqlServerName(fk.PrimaryTableType)} (\r\n" +

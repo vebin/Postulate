@@ -20,9 +20,9 @@ namespace Postulate.Merge
 			_modelType = modelType;
 		}
 
-		public override string SqlScript()
+		public override IEnumerable<string> SqlCommands()
 		{
-			return
+			yield return
 				$"CREATE TABLE {DbObject.SqlServerName(_modelType)} (\r\n\t" +
 					string.Join(",\r\n\t", CreateTableMembers(false)) +
 				"\r\n)";
