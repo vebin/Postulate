@@ -46,7 +46,7 @@ namespace Postulate.Merge
 
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
-				GetNewTables, GetDeletedTables, GetNewForeignKeys/*, GetRenamedTables,
+				GetDeletedTables, GetNewTables, GetNewForeignKeys/*, GetRenamedTables,
 				GetNewColumns, GetRenamedColumns, GetRetypedColumns, GetDeletedColumns,
 				GetNewPrimaryKeys, GetDeletedForeignKeys, GetDeletedPrimaryKeys*/
 			};

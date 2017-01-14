@@ -10,7 +10,7 @@ using Postulate.Attributes;
 
 namespace CodeFirstTest.Models
 {	
-	public class Organization : DefaultTable
+	public class Organization2 : DefaultTable
 	{
 		[MaxLength(100)]
 		[Required]

@@ -8,7 +8,7 @@ using Dapper;
 namespace CodeFirstTest.Models
 {
 	[ColumnAccess("OrganizationID", Access.InsertOnly)]
-	[ForeignKey("OrganizationID", typeof(Organization))]	
+	[ForeignKey("OrganizationID", typeof(Organization2))]	
 	[IdentityPosition(Position.EndOfTable)]
 	public abstract class DefaultTable : DataRecord<int>
 	{		
