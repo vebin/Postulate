@@ -13,7 +13,7 @@ namespace Postulate.Abstract
 {
 	public abstract class SqlGeneratorBase<TRecord, TKey> where TRecord : DataRecord<TKey>
 	{		
-		protected const string _idColumn = "ID";
+		protected const string _idColumn = "Id";
 
 		private bool _squareBraces = false;
 		private string _defaultSchema = string.Empty;

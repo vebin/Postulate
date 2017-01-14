@@ -20,7 +20,7 @@ namespace CodeFirstTest
 			/*LogEntry le = new LogEntry() { Description = "hello from visual studio" };
 			LogEntry.Db.Save(le);*/
 
-			Console.WriteLine($"ID = {le.ID}");
+			Console.WriteLine($"ID = {le.Id}");
 
 			/*using (var cn = db.GetConnection() as SqlConnection)
 			{

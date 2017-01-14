@@ -120,7 +120,7 @@ namespace Postulate.Abstract
 			if (record.IsNewRecord())
 			{
 				action = SaveAction.Insert;
-				record.ID = Insert(connection, record, parameters);
+				record.Id = Insert(connection, record, parameters);
 			}
 			else
 			{

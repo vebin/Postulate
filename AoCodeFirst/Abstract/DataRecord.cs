@@ -5,7 +5,7 @@ namespace Postulate.Abstract
 	public abstract class DataRecord<TKey>
 	{
 		private TKey _id;
-		public TKey ID
+		public TKey Id
 		{
 			get { return _id; }
 			set { if (_id.Equals(default(TKey))) { _id = value; } else { throw new InvalidOperationException("Can't set the ID property more than once."); } }
@@ -13,7 +13,7 @@ namespace Postulate.Abstract
 
 		public bool IsNewRecord()
 		{
-			return (ID.Equals(default(TKey)));
+			return (Id.Equals(default(TKey)));
 		}
 	}
 }

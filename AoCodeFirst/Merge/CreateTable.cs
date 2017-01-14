@@ -55,7 +55,7 @@ namespace Postulate.Merge
 						$@"CONSTRAINT [{pi.ForeignKeyName()}] FOREIGN KEY (
 							[{pi.SqlColumnName()}]
 						) REFERENCES {DbObject.SqlServerName(fk.PrimaryTableType)} (
-							[{nameof(DataRecord<int>.ID)}]
+							[{nameof(DataRecord<int>.Id)}]
 						)";
 				}));
 
@@ -67,7 +67,7 @@ namespace Postulate.Merge
 						$@"CONSTRAINT [FK_{DbObject.ConstraintName(_modelType)}_{fk.ColumnName}] FOREIGN KEY (
 							[{fk.ColumnName}]
 						) REFERENCES {DbObject.SqlServerName(fk.PrimaryTableType)} (
-							[{nameof(DataRecord<int>.ID)}]
+							[{nameof(DataRecord<int>.Id)}]
 						)";
 				}));
 
@@ -111,7 +111,7 @@ namespace Postulate.Merge
 
 			if (pkColumns.Any()) return pkColumns;
 
-			return new string[] { nameof(DataRecord<int>.ID) };
+			return new string[] { nameof(DataRecord<int>.Id) };
 		}
 
 		private string CreateTablePrimaryKey()
@@ -131,7 +131,7 @@ namespace Postulate.Merge
 			if (identityPos == Position.StartOfTable) results.Add(IdentityColumnSql());
 
 			results.AddRange(_modelType.GetProperties()
-				.Where(p => p.CanWrite && !p.Name.ToLower().Equals(nameof(DataRecord<int>.ID).ToLower()))
+				.Where(p => p.CanWrite && !p.Name.ToLower().Equals(nameof(DataRecord<int>.Id).ToLower()))
 				.Select(pi => $"[{pi.SqlColumnName()}] {pi.SqlColumnType()}"));
 
 			if (identityPos == Position.EndOfTable) results.Add(IdentityColumnSql());
@@ -150,7 +150,7 @@ namespace Postulate.Merge
 
 			Type keyType = FindKeyType(_modelType);
 
-			return $"[{nameof(DataRecord<int>.ID)}] {typeMap[keyType]}";
+			return $"[{nameof(DataRecord<int>.Id)}] {typeMap[keyType]}";
 		}
 
 		private Type FindKeyType(Type modelType)

@@ -112,7 +112,7 @@ namespace Postulate
 		public override void Delete(IDbConnection connection, TRecord record, object parameters = null)
 		{
 			DynamicParameters dp = new DynamicParameters(parameters);
-			dp.Add("ID", record.ID);
+			dp.Add("ID", record.Id);
 			connection.Execute(DeleteCommand, dp);
 		}
 
