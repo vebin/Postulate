@@ -99,8 +99,8 @@ namespace Postulate.Merge
 
 			results.AddRange(_modelType.GetCustomAttributes<UniqueKeyAttribute>().Select((u, i) =>
 			{
-				string constrainName = (string.IsNullOrEmpty(u.ConstraintName)) ? $"{DbObject.ConstraintName(_modelType)}_{i}" : u.ConstraintName;
-				return $"CONSTRAINT [U_{constrainName}] UNIQUE ({string.Join(", ", u.ColumnNames.Select(col => $"[{col}]"))})";
+				string constrainName = (string.IsNullOrEmpty(u.ConstraintName)) ? $"U_{DbObject.ConstraintName(_modelType)}_{i}" : u.ConstraintName;
+				return $"CONSTRAINT [{constrainName}] UNIQUE ({string.Join(", ", u.ColumnNames.Select(col => $"[{col}]"))})";
 			}));
 
 			return results;
