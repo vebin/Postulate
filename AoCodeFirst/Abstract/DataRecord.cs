@@ -8,7 +8,7 @@ namespace Postulate.Abstract
 		public TKey Id
 		{
 			get { return _id; }
-			set { if (_id.Equals(default(TKey))) { _id = value; } else { throw new InvalidOperationException("Can't set the ID property more than once."); } }
+			set { if (IsNewRecord()) { _id = value; } else { throw new InvalidOperationException("Can't set the ID property more than once."); } }
 		}
 
 		public bool IsNewRecord()
