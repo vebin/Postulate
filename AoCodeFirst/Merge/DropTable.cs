@@ -11,7 +11,7 @@ namespace Postulate.Merge
 		private readonly DbObject _object;
 		private readonly ForeignKeyRef[] _foreignKeys;
 
-		public DropTable(DbObject @object, ForeignKeyRef[] dependentFKs) : base(MergeObjectType.Table, MergeActionType.Delete, @object.ToString())
+		public DropTable(DbObject @object, ForeignKeyRef[] dependentFKs) : base(MergeObjectType.Table, MergeActionType.Delete, @object.QualifiedName())
 		{
 			_object = @object;
 			_foreignKeys = dependentFKs;

@@ -24,6 +24,11 @@ namespace Postulate.Merge
 		public string Name { get { return _name; } }
 		public bool SquareBraces { get; set; }
 
+		public string QualifiedName()
+		{
+			return $"{Schema}.{Name}";
+		}
+
 		public override string ToString()
 		{			
 			return (SquareBraces) ? $"[{Schema}].[{Name}]" : $"{Schema}.{Name}";
