@@ -33,6 +33,8 @@ namespace Postulate.Merge
 	public class SchemaMerge
 	{
 		private readonly List<Action> _actions;
+		private List<Type> _createdTables;
+		private List<Type> _deletedTables;
 
 		public SchemaMerge(Type dbType, IDbConnection connection)
 		{
@@ -42,7 +44,10 @@ namespace Postulate.Merge
 					!t.Name.StartsWith("<>") &&
 					t.Namespace.Equals(dbType.Namespace) &&					
 					!t.IsAbstract &&					
-					t.IsDerivedFromGeneric(typeof(DataRecord<>)));					
+					t.IsDerivedFromGeneric(typeof(DataRecord<>)));
+
+			_createdTables = new List<Type>();
+			_deletedTables = new List<Type>();
 
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
@@ -76,7 +81,8 @@ namespace Postulate.Merge
 				Console.WriteLine(a.ToString());
 				foreach (var cmd in a.SqlCommands())
 				{					
-					Console.WriteLine($"\t{cmd}");
+					Console.WriteLine($"+ {cmd}");
+					Console.WriteLine();
 					connection.Execute(cmd);
 				}
 			}
@@ -96,6 +102,7 @@ namespace Postulate.Merge
 				DbObject obj = DbObject.FromType(type);
 				if (!connection.Exists("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = obj.Schema, name = obj.Name }))
 				{
+					_createdTables.Add(type);
 					actions.Add(new CreateTable(type));
 				}
 			}
@@ -111,7 +118,7 @@ namespace Postulate.Merge
 			{
 				foreach (var pi in CreateForeignKey.GetForeignKeys(t))
 				{
-					if (!connection.Exists("[sys].[foreign_keys] WHERE [name]=@name", new { name = pi.ForeignKeyName() }))
+					if (!connection.Exists("[sys].[foreign_keys] WHERE [name]=@name", new { name = pi.ForeignKeyName() }) || _deletedTables.Contains(t))
 					{
 						actions.Add(new CreateForeignKey(pi));
 					}
@@ -150,7 +157,12 @@ namespace Postulate.Merge
 			var deletedTables = allTables.Where(tbl => !modelTypes.Any(modelType =>
 			{
 				var obj = DbObject.FromType(modelType);
-				return obj.Schema.Equals(tbl.Schema) && obj.Name.Equals(tbl.TableName);
+				if (obj.Schema.Equals(tbl.Schema) && obj.Name.Equals(tbl.TableName))
+				{
+					_deletedTables.Add(modelType);
+					return true;
+				}
+				return false;
 			}));
 							
 			Func<int, DropTable.ForeignKeyRef[]> getDependentFKs = (int objectID) =>
@@ -160,7 +172,7 @@ namespace Postulate.Merge
 					FROM [sys].[foreign_keys] [fk] INNER JOIN [sys].[tables] [tbl] ON [fk].[parent_object_id]=[tbl].[object_id] 
 					WHERE [referenced_object_id]=@objID", new { objID = objectID });
 				return dependentFKs.Select(fk => new DropTable.ForeignKeyRef() { ConstraintName = fk.ConstraintName, ReferencingTable = new DbObject(fk.ReferencingSchema, fk.ReferencingTable) }).ToArray();
-			};
+			};			
 
 			results.AddRange(deletedTables.Select(del => new DropTable(new DbObject(del.Schema, del.TableName), getDependentFKs(del.ObjectID))));
 
