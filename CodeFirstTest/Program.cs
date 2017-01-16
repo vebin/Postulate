@@ -9,10 +9,17 @@ namespace CodeFirstTest
 	{
 		static void Main(string[] args)
 		{
-			Organization org = Organization.Db().Find(1);
-			org.Name = "This As Well";
-			Organization.Db().Update(org, new { userName = "adamo" }, o => o.Name);
-			
+			PostulateDb db = new PostulateDb();
+			using (SqlConnection cn = db.GetConnection() as SqlConnection)
+			{
+				cn.Open();
+				SchemaMerge merge = new SchemaMerge(typeof(PostulateDb), cn);
+				foreach (var a in merge.Actions)
+				{
+					Console.WriteLine(a.ToString());
+				}
+			}
+			Console.ReadLine();
 		}
 	}
 }

@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using Dapper;
 using System.ComponentModel.DataAnnotations;
+using static Postulate.Merge.AddColumn;
 
 namespace Postulate.Merge
 {
@@ -32,9 +33,8 @@ namespace Postulate.Merge
 
 	public class SchemaMerge
 	{
-		private readonly List<Action> _actions;
-		private List<Type> _createdTables;
-		private List<Type> _deletedTables;
+		private readonly List<Action> _actions;		
+		private List<DbObject> _deletedTables;
 
 		public SchemaMerge(Type dbType, IDbConnection connection)
 		{
@@ -45,20 +45,21 @@ namespace Postulate.Merge
 					t.Namespace.Equals(dbType.Namespace) &&					
 					!t.IsAbstract &&					
 					t.IsDerivedFromGeneric(typeof(DataRecord<>)));
-
-			_createdTables = new List<Type>();
-			_deletedTables = new List<Type>();
+			
+			_deletedTables = new List<DbObject>();
 
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
-				GetDeletedTables, GetNewTables, GetNewForeignKeys/*, GetRenamedTables,
-				GetNewColumns, GetRenamedColumns, GetRetypedColumns, GetDeletedColumns,
+				GetDeletedTables, GetNewTables, GetNewForeignKeys, GetNewColumns/*
+				GetRenamedTables, GetRenamedColumns, GetRetypedColumns, GetDeletedColumns,
 				GetNewPrimaryKeys, GetDeletedForeignKeys, GetDeletedPrimaryKeys*/
 			};
 
 			_actions = new List<Action>();
 			foreach (var m in methods) _actions.AddRange(m.Invoke(modelTypes, cn));
 		}
+
+		public IEnumerable<Action> Actions { get { return _actions; } }
 
 		public void SaveAs(string fileName)
 		{
@@ -101,8 +102,7 @@ namespace Postulate.Merge
 			{
 				DbObject obj = DbObject.FromType(type);
 				if (!connection.Exists("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = obj.Schema, name = obj.Name }))
-				{
-					_createdTables.Add(type);
+				{					
 					actions.Add(new CreateTable(type));
 				}
 			}
@@ -116,9 +116,10 @@ namespace Postulate.Merge
 
 			foreach (var t in modelTypes)
 			{
+				DbObject obj = DbObject.FromType(t);
 				foreach (var pi in CreateForeignKey.GetForeignKeys(t))
 				{
-					if (!connection.Exists("[sys].[foreign_keys] WHERE [name]=@name", new { name = pi.ForeignKeyName() }) || _deletedTables.Contains(t))
+					if (!connection.Exists("[sys].[foreign_keys] WHERE [name]=@name", new { name = pi.ForeignKeyName() }) || _deletedTables.Contains(obj))
 					{
 						actions.Add(new CreateForeignKey(pi));
 					}
@@ -153,18 +154,12 @@ namespace Postulate.Merge
 			List<Action> results = new List<Action>();
 
 			var allTables = connection.Query(
-				"SELECT SCHEMA_NAME([schema_id]) AS [Schema], [name] AS [TableName], [object_id] AS [ObjectID] FROM [sys].[tables]");
-			var deletedTables = allTables.Where(tbl => !modelTypes.Any(modelType =>
-			{
-				var obj = DbObject.FromType(modelType);
-				if (obj.Schema.Equals(tbl.Schema) && obj.Name.Equals(tbl.TableName))
-				{
-					_deletedTables.Add(modelType);
-					return true;
-				}
-				return false;
-			}));
-							
+				"SELECT SCHEMA_NAME([schema_id]) AS [Schema], [name] AS [TableName], [object_id] AS [ObjectID] FROM [sys].[tables]")
+				.Select(tbl => new DbObject(tbl.Schema, tbl.TableName) { ObjectID = tbl.ObjectID });
+
+			var deletedTables = modelTypes.Select(mt => { return DbObject.FromType(mt); }).Where(obj => !allTables.Any(tbl => obj.Equals(tbl)));
+			_deletedTables.AddRange(deletedTables);
+										
 			Func<int, DropTable.ForeignKeyRef[]> getDependentFKs = (int objectID) =>
 			{				
 				var dependentFKs = connection.Query(
@@ -174,7 +169,7 @@ namespace Postulate.Merge
 				return dependentFKs.Select(fk => new DropTable.ForeignKeyRef() { ConstraintName = fk.ConstraintName, ReferencingTable = new DbObject(fk.ReferencingSchema, fk.ReferencingTable) }).ToArray();
 			};			
 
-			results.AddRange(deletedTables.Select(del => new DropTable(new DbObject(del.Schema, del.TableName), getDependentFKs(del.ObjectID))));
+			results.AddRange(deletedTables.Select(del => new DropTable(del, getDependentFKs(del.ObjectID))));
 
 			return results;
 		}
@@ -196,7 +191,29 @@ namespace Postulate.Merge
 
 		private IEnumerable<Action> GetNewColumns(IEnumerable<Type> modelTypes, IDbConnection connection)
 		{
-			throw new NotImplementedException();
+			List<Action> results = new List<Action>();
+
+			var schemaColumns = connection.Query<ColumnRef>(
+				@"SELECT SCHEMA_NAME([t].[schema_id]) AS [Schema], [t].[name] AS [TableName], [c].[Name] AS [ColumnName]
+				FROM [sys].[tables] [t] INNER JOIN [sys].[columns] [c] ON [t].[object_id]=[c].[object_id]", null);
+
+			var modelColumns = modelTypes.SelectMany(mt => mt.GetProperties().Select(pi =>
+			{
+				DbObject obj = DbObject.FromType(mt);
+				return new ColumnRef()
+				{
+					Schema = obj.Schema,
+					TableName = obj.Name,
+					ColumnName = pi.SqlColumnName(),
+					PropertyInfo = pi
+				};
+			}));
+
+			var newColumns = modelColumns.Where(mcol => !schemaColumns.Any(scol => mcol.Equals(scol)));
+
+			results.AddRange(newColumns.Select(col => new AddColumn(col)));
+
+			return results;
 		}
 
 		public override string ToString()

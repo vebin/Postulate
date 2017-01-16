@@ -17,6 +17,9 @@ namespace CodeFirstTest.Models
 		[PrimaryKey]		
 		public string Name { get; set; }		
 
+		[MaxLength(255)]
+		public string Description { get; set; }
+
 		public static SqlServerRowManager<Organization, int> Db()
 		{
 			return new SqlServerRowManager<Organization, int>(new PostulateDb());

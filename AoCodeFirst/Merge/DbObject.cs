@@ -22,6 +22,7 @@ namespace Postulate.Merge
 
 		public string Schema { get { return _schema; } }
 		public string Name { get { return _name; } }
+		public int ObjectID { get; set; }
 		public bool SquareBraces { get; set; }
 
 		public string QualifiedName()
