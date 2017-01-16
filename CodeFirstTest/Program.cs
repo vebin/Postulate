@@ -9,10 +9,10 @@ namespace CodeFirstTest
 	{
 		static void Main(string[] args)
 		{
-			PostulateDb db = new PostulateDb();
-			db.MergeSchema();
-
-			Console.ReadLine();
+			Organization org = Organization.Db().Find(1);
+			org.Name = "This As Well";
+			Organization.Db().Update(org, new { userName = "adamo" }, o => o.Name);
+			
 		}
 	}
 }

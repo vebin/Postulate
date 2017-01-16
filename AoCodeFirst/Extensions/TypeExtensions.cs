@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Postulate.Merge;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -24,6 +26,18 @@ namespace Postulate.Extensions
 			if (type.IsGenericType && type.GetGenericTypeDefinition().Equals(genericType)) return true;
 			if (type.BaseType != null) return IsDerivedFromGeneric(type.BaseType, genericType);
 			return false;
+		}
+
+		public static IEnumerable<PropertyInfo> GetPropertiesWithAttribute<TAttribute>(this Type type) where TAttribute : Attribute
+		{
+			return type.GetProperties().Where(pi => pi.HasAttribute<TAttribute>());
+		}
+
+		public static string DbObjectName(this Type type, bool squareBraces = false)
+		{
+			var obj = DbObject.FromType(type);
+			obj.SquareBraces = squareBraces;
+			return obj.ToString();
 		}
 	}
 }

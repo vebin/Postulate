@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Linq.Expressions;
 using Dapper;
 using Postulate.Abstract;
+using Postulate.Attributes;
 using Postulate.Enums;
 using Postulate.Extensions;
 using Postulate.Merge;
+using System.Reflection;
 
 namespace Postulate
 {
@@ -116,10 +119,35 @@ namespace Postulate
 			connection.Execute(DeleteCommand, dp);
 		}
 
-		public override void Update(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] setColumns, object parameters = null)
+		public void Update(TRecord record, object parameters, params Expression<Func<TRecord, object>>[] setColumns)
 		{
-			SqlServerGenerator<TRecord, TKey> sg = new SqlServerGenerator<TRecord, TKey>();
-			//connection.Execute(sg.UpdateStatement(), record);
+			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
+			{
+				cn.Open();
+				Update(cn, record, parameters, setColumns);
+			}
+		}
+
+		public override void Update(IDbConnection connection, TRecord record, object parameters, Expression<Func<TRecord, object>>[] setColumns)
+		{
+			DynamicParameters dp = new DynamicParameters(parameters);
+			dp.Add(nameof(record.Id), record.Id);
+
+			string setClause = string.Join(", ", setColumns.Select(expr =>
+			{
+				string propName = PropertyNameFromLambda(expr);
+				PropertyInfo pi = typeof(TRecord).GetProperty(propName);
+				dp.Add(propName, expr.Compile().Invoke(record));
+				return $"[{pi.SqlColumnName()}]=@{propName}";				
+			}).Concat(typeof(TRecord).GetPropertiesWithAttribute<UpdateExpressionAttribute>().Select(pi =>
+			{
+				UpdateExpressionAttribute attr = pi.GetCustomAttribute<UpdateExpressionAttribute>();
+				return $"[{pi.SqlColumnName()}]={attr.Expression}";
+			})));
+
+			string cmd = $"UPDATE {typeof(TRecord).DbObjectName(true)} SET {setClause} WHERE [{nameof(record.Id)}]=@id";
+
+			connection.Execute(cmd, dp);
 		}
 
 		public IEnumerable<TRecord> Query(string criteria, object parameters, int page = 0)

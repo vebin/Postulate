@@ -163,14 +163,14 @@ namespace Postulate.Abstract
 			return TrySave(connection, record, out action, out exception, parameters);
 		}
 
-		public abstract void Update(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] setColumns, object parameters = null);
+		public abstract void Update(IDbConnection connection, TRecord record, object parameters, params Expression<Func<TRecord, object>>[] setColumns);
 		
-		public bool TryUpdate(IDbConnection connection, TRecord record, Expression<Func<TRecord, object>>[] setColumns, out Exception exception, object parameters = null)
+		public bool TryUpdate(IDbConnection connection, TRecord record, object parameters, out Exception exception, params Expression<Func<TRecord, object>>[] setColumns)
 		{
 			exception = null;
 			try
 			{
-				Update(connection, record, setColumns, parameters);
+				Update(connection, record, parameters, setColumns);
 				return true;
 			}
 			catch (Exception exc)

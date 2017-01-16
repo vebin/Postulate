@@ -16,5 +16,10 @@ namespace CodeFirstTest.Models
 		[Required]
 		[PrimaryKey]		
 		public string Name { get; set; }		
+
+		public static SqlServerRowManager<Organization, int> Db()
+		{
+			return new SqlServerRowManager<Organization, int>(new PostulateDb());
+		}
 	}
 }

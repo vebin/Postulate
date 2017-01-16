@@ -1,4 +1,5 @@
-﻿using Postulate.Attributes;
+﻿using Postulate;
+using Postulate.Attributes;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -30,5 +31,10 @@ namespace CodeFirstTest.Models
 		public decimal ReorderQty { get; set; }		
 		[Column(TypeName = "date")]
 		public DateTime? EffectiveDate { get; set; }
+
+		public static SqlServerRowManager<Item, int> Db()
+		{
+			return new SqlServerRowManager<Item, int>(new PostulateDb());
+		}
 	}
 }
