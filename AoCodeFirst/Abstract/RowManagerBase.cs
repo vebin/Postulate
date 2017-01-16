@@ -52,6 +52,18 @@ namespace Postulate.Abstract
 			}
 		}
 
+		public bool TryFind(IDbConnection connection, TKey id, out TRecord record)
+		{
+			record = Find(connection, id);
+			return (record != null);
+		}
+
+		public bool TryFindWhere(IDbConnection connection, string criteria, object parameters, out TRecord record)
+		{
+			record = FindWhere(connection, criteria, parameters);
+			return (record != null);
+		}
+
 		public string DefaultQuery { get; set; }
 		public string FindCommand { get; set; }		
 		public string InsertCommand { get; set; }
@@ -180,6 +192,29 @@ namespace Postulate.Abstract
 				}
 			}
 			return false;
+		}
+
+		protected string PropertyNameFromLambda(Expression expression)
+		{
+			// thanks to http://odetocode.com/blogs/scott/archive/2012/11/26/why-all-the-lambdas.aspx
+			// thanks to http://stackoverflow.com/questions/671968/retrieving-property-name-from-lambda-expression
+
+			LambdaExpression le = expression as LambdaExpression;
+			if (le == null) throw new ArgumentException("expression");
+
+			MemberExpression me = null;
+			if (le.Body.NodeType == ExpressionType.Convert)
+			{
+				me = ((UnaryExpression)le.Body).Operand as MemberExpression;
+			}
+			else if (le.Body.NodeType == ExpressionType.MemberAccess)
+			{
+				me = le.Body as MemberExpression;
+			}
+
+			if (me == null) throw new ArgumentException("expression");
+
+			return me.Member.Name;
 		}
 	}
 }
