@@ -33,7 +33,8 @@ namespace Postulate.Merge
 
 	public class SchemaMerge
 	{
-		private readonly List<Action> _actions;		
+		private readonly List<Action> _actions;
+		private List<DbObject> _createdTables;
 		private List<DbObject> _deletedTables;
 
 		public SchemaMerge(Type dbType, IDbConnection connection)
@@ -45,7 +46,8 @@ namespace Postulate.Merge
 					t.Namespace.Equals(dbType.Namespace) &&					
 					!t.IsAbstract &&					
 					t.IsDerivedFromGeneric(typeof(DataRecord<>)));
-			
+
+			_createdTables = new List<DbObject>();
 			_deletedTables = new List<DbObject>();
 
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
@@ -102,7 +104,8 @@ namespace Postulate.Merge
 			{
 				DbObject obj = DbObject.FromType(type);
 				if (!connection.Exists("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = obj.Schema, name = obj.Name }))
-				{					
+				{
+					_createdTables.Add(obj);
 					actions.Add(new CreateTable(type));
 				}
 			}
@@ -157,7 +160,7 @@ namespace Postulate.Merge
 				"SELECT SCHEMA_NAME([schema_id]) AS [Schema], [name] AS [TableName], [object_id] AS [ObjectID] FROM [sys].[tables]")
 				.Select(tbl => new DbObject(tbl.Schema, tbl.TableName) { ObjectID = tbl.ObjectID });
 
-			var deletedTables = modelTypes.Select(mt => { return DbObject.FromType(mt); }).Where(obj => !allTables.Any(tbl => obj.Equals(tbl)));
+			var deletedTables = allTables.Where(obj => !modelTypes.Any(mt => !obj.Equals(mt)));			
 			_deletedTables.AddRange(deletedTables);
 										
 			Func<int, DropTable.ForeignKeyRef[]> getDependentFKs = (int objectID) =>
@@ -209,7 +212,9 @@ namespace Postulate.Merge
 				};
 			}));
 
-			var newColumns = modelColumns.Where(mcol => !schemaColumns.Any(scol => mcol.Equals(scol)));
+			var newColumns = modelColumns.Where(mcol => 
+				!_createdTables.Contains(new DbObject(mcol.Schema, mcol.TableName)) && 
+				!schemaColumns.Any(scol => mcol.Equals(scol)));
 
 			results.AddRange(newColumns.Select(col => new AddColumn(col)));
 
