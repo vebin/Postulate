@@ -58,6 +58,7 @@
     <Compile Include="Merge\SchemaMerge.cs" />
     <Compile Include="Extensions\PropertyInfoExtensions.cs" />
     <Compile Include="Profiler.cs" />
+    <Compile Include="ProfilerWrapper.cs" />
     <Compile Include="SqlServerDb.cs" />
     <Compile Include="Validation\IValidateable.cs" />
     <Compile Include="Validation\ValidationAttribute.cs" />

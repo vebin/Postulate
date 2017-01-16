@@ -62,7 +62,7 @@ namespace Postulate
             }
         }		
 		
-		internal void Start(SqlConnection connection, CommandDefinition cmdDef, [CallerMemberName]string source = null)
+		internal void Start(IDbConnection connection, CommandDefinition cmdDef, [CallerMemberName]string source = null)
 		{
 			if (!ShouldLog(connection, cmdDef, source)) return;
 
@@ -75,7 +75,7 @@ namespace Postulate
 			_sw = Stopwatch.StartNew();
 		}
 
-		internal void Stop(SqlConnection connection)
+		internal void Stop(IDbConnection connection)
 		{
 			if (_sw == null || !_sw.IsRunning) return;
 
