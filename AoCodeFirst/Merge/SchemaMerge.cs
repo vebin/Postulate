@@ -9,7 +9,7 @@ using System.Reflection;
 using System.Text;
 using Dapper;
 using System.ComponentModel.DataAnnotations;
-using static Postulate.Merge.AddColumn;
+using static Postulate.Merge.AddColumns;
 
 namespace Postulate.Merge
 {
@@ -214,7 +214,10 @@ namespace Postulate.Merge
 				!_createdTables.Contains(new DbObject(mcol.Schema, mcol.TableName)) && 
 				!schemaColumns.Any(scol => mcol.Equals(scol)));
 
-			results.AddRange(newColumns.Select(col => new AddColumn(col)));
+			foreach (var colGroup in newColumns.GroupBy(item => new { Schema = item.Schema, TableName = item.TableName }))
+			{
+				results.Add(new AddColumns(colGroup));
+			}
 
 			return results;
 		}

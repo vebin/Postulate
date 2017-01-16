@@ -20,6 +20,9 @@ namespace CodeFirstTest.Models
 		[MaxLength(255)]
 		public string Description { get; set; }
 
+		public DateTime? EffectiveDate { get; set; }
+		public decimal BillingRate { get; set; }
+
 		public static SqlServerRowManager<Organization, int> Db()
 		{
 			return new SqlServerRowManager<Organization, int>(new PostulateDb());

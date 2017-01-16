@@ -37,6 +37,8 @@ namespace CodeFirstTest.Models
 		[Regex(Patterns.Email, "Email address does not appear valid.")]
 		public string Email { get; set; }
 		
+		public decimal BillingRate { get; set; }
+
 		[Column(TypeName = "date")]
 		public DateTime EffectiveDate { get; set; }
 

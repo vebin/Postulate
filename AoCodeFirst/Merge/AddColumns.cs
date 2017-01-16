@@ -7,13 +7,14 @@ using System.Threading.Tasks;
 
 namespace Postulate.Merge
 {
-	internal class AddColumn : SchemaMerge.Action
+	internal class AddColumns : SchemaMerge.Action
 	{
-		private readonly PropertyInfo _propertyInfo;
+		private readonly IEnumerable<ColumnRef> _columns;
 
-		public AddColumn(ColumnRef columnInfo) : base(MergeObjectType.Column, MergeActionType.Create, columnInfo.ToString())
+		public AddColumns(IEnumerable<ColumnRef> columns) : 
+			base(MergeObjectType.Column, MergeActionType.Create, $"{columns.First().Schema}.{columns.First().TableName}: {string.Join(", ", columns.Select(col => col.ColumnName))}")
 		{
-			_propertyInfo = columnInfo.PropertyInfo;
+			_columns = columns;
 		}
 
 		public override IEnumerable<string> SqlCommands()
