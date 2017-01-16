@@ -16,7 +16,7 @@ namespace Postulate.Abstract
 		protected string ConnectionString
 		{
 			get { return _connectionString; }
-		}
+		}		
 
 		public abstract IDbConnection GetConnection();
 

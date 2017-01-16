@@ -17,6 +17,8 @@ namespace Postulate
 			return new SqlConnection(ConnectionString);
 		}
 
+		public Profiler Profiler { get; set; }
+
 		public override void MergeSchema()
 		{
 			using (SqlConnection cn = GetConnection() as SqlConnection)
