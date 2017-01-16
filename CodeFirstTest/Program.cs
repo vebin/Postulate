@@ -18,6 +18,10 @@ namespace CodeFirstTest
 				{
 					Console.WriteLine(a.ToString());
 				}
+
+				Console.WriteLine();
+				Console.WriteLine("Executing...");
+				merge.Execute(cn);
 			}
 			Console.ReadLine();
 		}

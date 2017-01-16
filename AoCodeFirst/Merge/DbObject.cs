@@ -23,6 +23,7 @@ namespace Postulate.Merge
 		public string Schema { get { return _schema; } }
 		public string Name { get { return _name; } }
 		public int ObjectID { get; set; }
+		public Type ModelType { get; set; }
 		public bool SquareBraces { get; set; }
 
 		public string QualifiedName()
@@ -42,6 +43,10 @@ namespace Postulate.Merge
 			{
 				return test.Schema.ToLower().Equals(this.Schema.ToLower()) && test.Name.ToLower().Equals(this.Name.ToLower());
 			}
+
+			Type testType = obj as Type;
+			if (testType != null) return Equals(DbObject.FromType(testType));
+
 			return false;
 		}
 
@@ -62,7 +67,7 @@ namespace Postulate.Merge
 				name = attr.Name;
 			}
 
-			return new DbObject(schema, name);
+			return new DbObject(schema, name) { ModelType = modelType };
 		}
 
 		public static string ConstraintName(Type modelType)

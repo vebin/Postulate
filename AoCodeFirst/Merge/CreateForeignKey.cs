@@ -5,6 +5,8 @@ using System.Reflection;
 using Postulate.Extensions;
 using Postulate.Attributes;
 using Postulate.Abstract;
+using Dapper;
+using System.Data;
 
 namespace Postulate.Merge
 {
@@ -42,9 +44,35 @@ namespace Postulate.Merge
 			}			
 		}
 
+		internal static IEnumerable<ForeignKeyRef> GetReferencingForeignKeys(Type modelType, IEnumerable<Type> allTypes)
+		{
+			return allTypes.SelectMany(t => GetForeignKeys(t).Where(pi =>
+			{
+				ForeignKeyAttribute fk = pi.GetForeignKeyAttribute();
+				return (fk.PrimaryTableType.Equals(modelType));
+			}).Select(pi => 
+				new ForeignKeyRef() { ConstraintName = pi.ForeignKeyName(), ReferencingTable = DbObject.FromType(pi.DeclaringType) }
+			));
+		}
+
+		internal static IEnumerable<ForeignKeyRef> GetReferencingForeignKeys(IDbConnection cn, int objectID)
+		{
+			return cn.Query(
+				@"SELECT [fk].[name] AS [ConstraintName], SCHEMA_NAME([tbl].[schema_id]) AS [ReferencingSchema], [tbl].[name] AS [ReferencingTable] 
+				FROM [sys].[foreign_keys] [fk] INNER JOIN [sys].[tables] [tbl] ON [fk].[parent_object_id]=[tbl].[object_id] 
+				WHERE [referenced_object_id]=@objID", new { objID = objectID })
+				.Select(fk => new ForeignKeyRef() { ConstraintName = fk.ConstraintName, ReferencingTable = new DbObject(fk.ReferencingSchema, fk.ReferencingTable) });
+		}
+
 		public override IEnumerable<string> ValidationErrors()
 		{
 			return new string[] { };
+		}
+
+		internal class ForeignKeyRef
+		{
+			public DbObject ReferencingTable { get; set; }
+			public string ConstraintName { get; set; }
 		}
 	}
 }

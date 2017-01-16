@@ -10,7 +10,7 @@ using Postulate.Attributes;
 
 namespace CodeFirstTest.Models
 {	
-	public class Organization2 : DefaultTable
+	public class Organization : DefaultTable
 	{
 		[MaxLength(100)]
 		[Required]
@@ -20,9 +20,9 @@ namespace CodeFirstTest.Models
 		[MaxLength(255)]
 		public string Description { get; set; }
 
-		public static SqlServerRowManager<Organization2, int> Db()
+		public static SqlServerRowManager<Organization, int> Db()
 		{
-			return new SqlServerRowManager<Organization2, int>(new PostulateDb());
+			return new SqlServerRowManager<Organization, int>(new PostulateDb());
 		}
 	}
 }

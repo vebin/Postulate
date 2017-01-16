@@ -118,11 +118,11 @@ namespace Postulate.Merge
 			List<Action> actions = new List<Action>();
 
 			foreach (var t in modelTypes)
-			{
-				DbObject obj = DbObject.FromType(t);
+			{				
 				foreach (var pi in CreateForeignKey.GetForeignKeys(t))
 				{
-					if (!connection.Exists("[sys].[foreign_keys] WHERE [name]=@name", new { name = pi.ForeignKeyName() }) || _deletedTables.Contains(obj))
+					string fkName = pi.ForeignKeyName();
+					if (!connection.Exists("[sys].[foreign_keys] WHERE [name]=@name", new { name = fkName }) || IsForeignKeyInCreatedTables(modelTypes, fkName))
 					{
 						actions.Add(new CreateForeignKey(pi));
 					}
@@ -130,6 +130,13 @@ namespace Postulate.Merge
 			}
 
 			return actions;
+		}
+
+		private bool IsForeignKeyInCreatedTables(IEnumerable<Type> modelTypes, string fkName)
+		{
+			return _createdTables.Any(obj => 
+				CreateForeignKey.GetReferencingForeignKeys(obj.ModelType, modelTypes).Any(fk => 
+					fk.ConstraintName.Equals(fkName)));
 		}
 
 		private IEnumerable<Action> GetDeletedPrimaryKeys(IEnumerable<Type> modelTypes, IDbConnection connection)
@@ -160,19 +167,10 @@ namespace Postulate.Merge
 				"SELECT SCHEMA_NAME([schema_id]) AS [Schema], [name] AS [TableName], [object_id] AS [ObjectID] FROM [sys].[tables]")
 				.Select(tbl => new DbObject(tbl.Schema, tbl.TableName) { ObjectID = tbl.ObjectID });
 
-			var deletedTables = allTables.Where(obj => !modelTypes.Any(mt => !obj.Equals(mt)));			
+			var deletedTables = allTables.Where(obj => !modelTypes.Any(mt => obj.Equals(mt)));			
 			_deletedTables.AddRange(deletedTables);
 										
-			Func<int, DropTable.ForeignKeyRef[]> getDependentFKs = (int objectID) =>
-			{				
-				var dependentFKs = connection.Query(
-					@"SELECT [fk].[name] AS [ConstraintName], SCHEMA_NAME([tbl].[schema_id]) AS [ReferencingSchema], [tbl].[name] AS [ReferencingTable] 
-					FROM [sys].[foreign_keys] [fk] INNER JOIN [sys].[tables] [tbl] ON [fk].[parent_object_id]=[tbl].[object_id] 
-					WHERE [referenced_object_id]=@objID", new { objID = objectID });
-				return dependentFKs.Select(fk => new DropTable.ForeignKeyRef() { ConstraintName = fk.ConstraintName, ReferencingTable = new DbObject(fk.ReferencingSchema, fk.ReferencingTable) }).ToArray();
-			};			
-
-			results.AddRange(deletedTables.Select(del => new DropTable(del, getDependentFKs(del.ObjectID))));
+			results.AddRange(deletedTables.Select(del => new DropTable(del, CreateForeignKey.GetReferencingForeignKeys(connection, del.ObjectID))));
 
 			return results;
 		}

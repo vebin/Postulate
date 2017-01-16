@@ -15,7 +15,7 @@ namespace Postulate.Merge
 	{
 		private readonly Type _modelType;
 
-		public CreateTable(Type modelType) : base(MergeObjectType.Table, MergeActionType.Create, modelType.Name)
+		public CreateTable(Type modelType) : base(MergeObjectType.Table, MergeActionType.Create, DbObject.FromType(modelType).QualifiedName())
 		{
 			_modelType = modelType;
 		}

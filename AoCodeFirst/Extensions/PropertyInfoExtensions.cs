@@ -81,16 +81,22 @@ namespace Postulate.Extensions
 			return $"FK_{DbObject.ConstraintName(propertyInfo.DeclaringType)}_{propertyInfo.SqlColumnName()}";
 		}
 
-		public static bool HasAttribute<TAttribute>(this PropertyInfo propertyInfo, out TAttribute attribute) where TAttribute : Attribute
+		public static bool HasAttribute<TAttribute>(this ICustomAttributeProvider provider, out TAttribute attribute) where TAttribute : Attribute
 		{
-			attribute = propertyInfo.GetCustomAttribute<TAttribute>();
-			return (attribute != null);
+			attribute = null;
+			var attrs = provider.GetCustomAttributes(typeof(TAttribute), true);
+			if (attrs.Any())
+			{
+				attribute = attrs.First() as TAttribute;
+				return true;
+			}
+			return false;
 		}
 
-		public static bool HasAttribute<TAttribute>(this PropertyInfo propertyInfo) where TAttribute : Attribute
+		public static bool HasAttribute<TAttribute>(this ICustomAttributeProvider provider) where TAttribute : Attribute
 		{
 			TAttribute attr;
-			return HasAttribute(propertyInfo, out attr);
+			return HasAttribute(provider, out attr);
 		}
 
 		private static bool AllowSqlNull(PropertyInfo propertyInfo)
