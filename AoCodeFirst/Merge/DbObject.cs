@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
+using System.Data;
+using Dapper;
 
 namespace Postulate.Merge
 {
@@ -53,6 +55,13 @@ namespace Postulate.Merge
 		public override int GetHashCode()
 		{
 			return Schema.GetHashCode() + Name.GetHashCode();
+		}
+
+		public static DbObject FromType(Type modelType, IDbConnection connection)
+		{
+			DbObject obj = FromType(modelType);
+			obj.ObjectID = connection.QueryFirst<int>("SELECT [object_id] FROM [sys].[tables] WHERE SCHEMA_NAME([schema])=@schema AND [name]=@name", new { schema = obj.Schema, name = obj.Name });
+			return obj;
 		}
 
 		public static DbObject FromType(Type modelType)

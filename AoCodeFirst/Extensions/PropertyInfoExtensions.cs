@@ -93,13 +93,20 @@ namespace Postulate.Extensions
 			return false;
 		}
 
+		public static bool HasAttributeWhere<TAttribute>(this ICustomAttributeProvider provider, Func<TAttribute, bool> predicate) where TAttribute : Attribute
+		{
+			TAttribute attr;
+			if (HasAttribute(provider, out attr)) return predicate.Invoke(attr);
+			return false;
+		}
+
 		public static bool HasAttribute<TAttribute>(this ICustomAttributeProvider provider) where TAttribute : Attribute
 		{
 			TAttribute attr;
 			return HasAttribute(provider, out attr);
 		}
 
-		private static bool AllowSqlNull(PropertyInfo propertyInfo)
+		public static bool AllowSqlNull(this PropertyInfo propertyInfo)
 		{
 			if (InPrimaryKey(propertyInfo)) return false;
 			var required = propertyInfo.GetCustomAttribute<RequiredAttribute>();

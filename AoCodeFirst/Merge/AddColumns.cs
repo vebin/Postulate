@@ -4,14 +4,19 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Postulate.Extensions;
+using Postulate.Attributes;
+using System.Data;
 
 namespace Postulate.Merge
 {
 	internal class AddColumns : SchemaMerge.Action
 	{
 		private readonly IEnumerable<ColumnRef> _columns;
+		private readonly Type _modelType;
+		private readonly IDbConnection _connection;
 
-		public AddColumns(IEnumerable<ColumnRef> columns) : 
+		public AddColumns(Type modelType, IEnumerable<ColumnRef> columns, IDbConnection connection) : 
 			base(MergeObjectType.Column, MergeActionType.Create, $"{columns.First().Schema}.{columns.First().TableName}: {string.Join(", ", columns.Select(col => col.ColumnName))}")
 		{
 			if (columns.GroupBy(item => new { schema = item.Schema, table = item.TableName }).Count() > 1)
@@ -20,17 +25,46 @@ namespace Postulate.Merge
 			}
 
 			_columns = columns;
+			_modelType = modelType;
+			_connection = connection;
 		}
 
 		public override IEnumerable<string> SqlCommands()
+		{
+			string tempTableName;
+			string tempTableCreate = CreateTempTable(out tempTableName);
+			yield return tempTableCreate;
+
+			var obj = DbObject.FromType(_modelType, _connection);
+			string sourceTableName = obj.ToString();
+			yield return InsertInto(sourceTableName, tempTableName);
+			
+			DropTable drop = new DropTable(obj, _connection);
+			foreach (var cmd in drop.SqlCommands()) yield return cmd;
+			
+			yield return InsertInto(tempTableName, sourceTableName);
+		}
+
+		private string InsertInto(string sourceTable, string targetTable)
+		{
+			throw new NotImplementedException();
+		}
+
+		private string CreateTempTable(out string tableName)
 		{
 			throw new NotImplementedException();
 		}
 
 		public override IEnumerable<string> ValidationErrors()
-		{
-			// not nullable columns require default expression attribute
-			return new string[] { };
+		{			
+			foreach (var col in _columns)
+			{
+				if (!col.PropertyInfo.AllowSqlNull() && 
+					(!col.PropertyInfo.HasAttribute<DefaultExpressionAttribute>() || col.PropertyInfo.HasAttributeWhere<InsertExpressionAttribute>(a => a.HasParameters)))
+				{
+					yield return $"Column {col.Schema}.{col.TableName}.{col.ColumnName} must have either a [DefaultExpression] attribute or an [InsertExpression] with HasParameters = false";
+				}
+			}
 		}
 
 		internal class ColumnRef

@@ -36,6 +36,8 @@ namespace Postulate.Merge
 		private readonly IEnumerable<Type> _modelTypes;
 		private readonly List<Action> _actions;
 
+		private List<DbObject> _createdTables;
+
 		public SchemaMerge(Type dbType, IDbConnection connection)
 		{
 			IDbConnection cn = connection;
@@ -46,11 +48,13 @@ namespace Postulate.Merge
 					!t.IsAbstract &&					
 					t.IsDerivedFromGeneric(typeof(DataRecord<>)));
 
+			_createdTables = new List<DbObject>();
+
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
 				GetDeletedTables, GetNewTables, GetNewColumns/*
 				GetRenamedTables, GetRenamedColumns, GetRetypedColumns, GetDeletedColumns,
-				GetNewPrimaryKeys, GetDeletedForeignKeys, GetDeletedPrimaryKeys*/
+				GetNewPrimaryKeys, GetDeletedPrimaryKeys*/
 			};
 
 			_actions = new List<Action>();
@@ -118,7 +122,8 @@ namespace Postulate.Merge
 			{
 				DbObject obj = DbObject.FromType(type);
 				if (!connection.Exists("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = obj.Schema, name = obj.Name }))
-				{					
+				{
+					_createdTables.Add(obj);
 					actions.Add(new CreateTable(type));
 				}
 			}
@@ -181,14 +186,14 @@ namespace Postulate.Merge
 				FROM [sys].[tables] [t] INNER JOIN [sys].[columns] [c] ON [t].[object_id]=[c].[object_id]", null);
 
 			var dbObjects = schemaColumns.GroupBy(item => new DbObject(item.Schema, item.TableName) { ObjectID = item.ObjectID });
-			var dboDictionary = dbObjects.ToDictionary(obj => obj.Key, obj => obj.Key.ObjectID);
+			var dcObjectIDs = dbObjects.ToDictionary(obj => obj.Key, obj => obj.Key.ObjectID);
 
-			Dictionary<DbObject, Type> modelTypeDict = new Dictionary<DbObject, Type>();
+			Dictionary<DbObject, Type> dcModelTypes = new Dictionary<DbObject, Type>();
 
 			var modelColumns = modelTypes.SelectMany(mt => mt.GetProperties().Select(pi =>
 			{
 				DbObject obj = DbObject.FromType(mt);
-				modelTypeDict.Add(obj, mt);
+				dcModelTypes.Add(obj, mt);
 				return new ColumnRef()
 				{
 					Schema = obj.Schema,
@@ -206,12 +211,12 @@ namespace Postulate.Merge
 			{				
 				if (IsTableEmpty(connection, colGroup.Key.Schema, colGroup.Key.Name))
 				{
-					results.Add(new DropTable(colGroup.Key, dboDictionary[colGroup.Key], connection));
-					results.Add(new CreateTable(modelTypeDict[colGroup.Key]));
+					results.Add(new DropTable(colGroup.Key, dcObjectIDs[colGroup.Key], connection));
+					results.Add(new CreateTable(dcModelTypes[colGroup.Key]));
 				}
 				else
 				{
-					results.Add(new AddColumns(colGroup));
+					results.Add(new AddColumns(dcModelTypes[colGroup.Key], colGroup, connection));
 				}				
 			}
 
