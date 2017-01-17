@@ -227,10 +227,12 @@ namespace Postulate.Merge
 			StringBuilder sb = new StringBuilder();
 			foreach (var action in _actions)
 			{
-				sb.Append(action.SqlCommands());
-				sb.AppendLine();
-				sb.AppendLine("GO");
-				sb.AppendLine();
+				foreach (var cmd in action.SqlCommands())
+				{
+					sb.Append(cmd);
+					sb.AppendLine("GO");
+					sb.AppendLine();
+				}				
 			}
 			return sb.ToString();
 		}

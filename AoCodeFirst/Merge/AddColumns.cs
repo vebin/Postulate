@@ -24,6 +24,7 @@ namespace Postulate.Merge
 
 		public override IEnumerable<string> ValidationErrors()
 		{
+			// not nullable columns require default expression attribute
 			return new string[] { };
 		}
 
