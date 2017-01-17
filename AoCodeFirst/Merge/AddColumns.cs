@@ -14,6 +14,11 @@ namespace Postulate.Merge
 		public AddColumns(IEnumerable<ColumnRef> columns) : 
 			base(MergeObjectType.Column, MergeActionType.Create, $"{columns.First().Schema}.{columns.First().TableName}: {string.Join(", ", columns.Select(col => col.ColumnName))}")
 		{
+			if (columns.GroupBy(item => new { schema = item.Schema, table = item.TableName }).Count() > 1)
+			{
+				throw new ArgumentException("Can't have more than one table in an AddColumns merge action.");
+			}
+
 			_columns = columns;
 		}
 
@@ -34,6 +39,7 @@ namespace Postulate.Merge
 			public string TableName { get; set; }
 			public string ColumnName { get; set; }
 			public PropertyInfo PropertyInfo { get; set; }
+			public int ObjectID { get; set; }
 
 			public override bool Equals(object obj)
 			{

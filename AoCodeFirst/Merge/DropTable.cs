@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Data;
 using static Postulate.Merge.CreateForeignKey;
 
 namespace Postulate.Merge
@@ -12,10 +9,15 @@ namespace Postulate.Merge
 		private readonly DbObject _object;
 		private readonly IEnumerable<ForeignKeyRef> _foreignKeys;
 
-		public DropTable(DbObject @object, IEnumerable<ForeignKeyRef> dependentFKs) : base(MergeObjectType.Table, MergeActionType.Delete, @object.QualifiedName())
+		public DropTable(DbObject @object, int objectID, IDbConnection connection) : this(@object, connection)
+		{			
+			@object.ObjectID = objectID;
+		}
+
+		public DropTable(DbObject @object, IDbConnection connection) : base(MergeObjectType.Table, MergeActionType.Delete, @object.QualifiedName())
 		{
 			_object = @object;
-			_foreignKeys = dependentFKs;
+			_foreignKeys = GetReferencingForeignKeys(connection, @object.ObjectID);
 		}
 
 		public override IEnumerable<string> SqlCommands()

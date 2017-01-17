@@ -33,32 +33,28 @@ namespace Postulate.Merge
 
 	public class SchemaMerge
 	{
+		private readonly IEnumerable<Type> _modelTypes;
 		private readonly List<Action> _actions;
-		private List<DbObject> _createdTables;
-		private List<DbObject> _deletedTables;
 
 		public SchemaMerge(Type dbType, IDbConnection connection)
 		{
 			IDbConnection cn = connection;
-			var modelTypes = dbType.Assembly.GetTypes()
+			_modelTypes = dbType.Assembly.GetTypes()
 				.Where(t =>
 					!t.Name.StartsWith("<>") &&
 					t.Namespace.Equals(dbType.Namespace) &&					
 					!t.IsAbstract &&					
 					t.IsDerivedFromGeneric(typeof(DataRecord<>)));
 
-			_createdTables = new List<DbObject>();
-			_deletedTables = new List<DbObject>();
-
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
-				GetDeletedTables, GetNewTables, GetNewForeignKeys, GetNewColumns/*
+				GetDeletedTables, GetNewTables, GetNewColumns/*
 				GetRenamedTables, GetRenamedColumns, GetRetypedColumns, GetDeletedColumns,
 				GetNewPrimaryKeys, GetDeletedForeignKeys, GetDeletedPrimaryKeys*/
 			};
 
 			_actions = new List<Action>();
-			foreach (var m in methods) _actions.AddRange(m.Invoke(modelTypes, cn));
+			foreach (var m in methods) _actions.AddRange(m.Invoke(_modelTypes, cn));
 		}
 
 		public IEnumerable<Action> Actions { get { return _actions; } }
@@ -89,6 +85,24 @@ namespace Postulate.Merge
 					connection.Execute(cmd);
 				}
 			}
+
+			CreateForeignKeys(connection);
+		}
+
+		private void CreateForeignKeys(IDbConnection connection)
+		{
+			foreach (var t in _modelTypes)
+			{
+				foreach (var pi in CreateForeignKey.GetForeignKeys(t))
+				{
+					string fkName = pi.ForeignKeyName();
+					if (!connection.Exists("[sys].[foreign_keys] WHERE [name]=@name", new { name = fkName }))
+					{
+						var fk = new CreateForeignKey(pi);
+						foreach (var cmd in fk.SqlCommands()) connection.Execute(cmd);
+					}
+				}
+			}
 		}
 
 		public IEnumerable<ValidationError> ValidationErrors()
@@ -104,8 +118,7 @@ namespace Postulate.Merge
 			{
 				DbObject obj = DbObject.FromType(type);
 				if (!connection.Exists("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = obj.Schema, name = obj.Name }))
-				{
-					_createdTables.Add(obj);
+				{					
 					actions.Add(new CreateTable(type));
 				}
 			}
@@ -113,38 +126,7 @@ namespace Postulate.Merge
 			return actions;
 		}
 
-		private IEnumerable<Action> GetNewForeignKeys(IEnumerable<Type> modelTypes, IDbConnection connection)
-		{
-			List<Action> actions = new List<Action>();
-
-			foreach (var t in modelTypes)
-			{				
-				foreach (var pi in CreateForeignKey.GetForeignKeys(t))
-				{
-					string fkName = pi.ForeignKeyName();
-					if (!connection.Exists("[sys].[foreign_keys] WHERE [name]=@name", new { name = fkName }) || IsForeignKeyInCreatedTables(modelTypes, fkName))
-					{
-						actions.Add(new CreateForeignKey(pi));
-					}
-				}				
-			}
-
-			return actions;
-		}
-
-		private bool IsForeignKeyInCreatedTables(IEnumerable<Type> modelTypes, string fkName)
-		{
-			return _createdTables.Any(obj => 
-				CreateForeignKey.GetReferencingForeignKeys(obj.ModelType, modelTypes).Any(fk => 
-					fk.ConstraintName.Equals(fkName)));
-		}
-
 		private IEnumerable<Action> GetDeletedPrimaryKeys(IEnumerable<Type> modelTypes, IDbConnection connection)
-		{
-			throw new NotImplementedException();
-		}
-
-		private IEnumerable<Action> GetDeletedForeignKeys(IEnumerable<Type> modelTypes, IDbConnection connection)
 		{
 			throw new NotImplementedException();
 		}
@@ -170,7 +152,7 @@ namespace Postulate.Merge
 			var deletedTables = allTables.Where(obj => !modelTypes.Any(mt => obj.Equals(mt)));			
 			_deletedTables.AddRange(deletedTables);
 										
-			results.AddRange(deletedTables.Select(del => new DropTable(del, CreateForeignKey.GetReferencingForeignKeys(connection, del.ObjectID))));
+			results.AddRange(deletedTables.Select(del => new DropTable(del, connection)));
 
 			return results;
 		}
@@ -195,18 +177,24 @@ namespace Postulate.Merge
 			List<Action> results = new List<Action>();
 
 			var schemaColumns = connection.Query<ColumnRef>(
-				@"SELECT SCHEMA_NAME([t].[schema_id]) AS [Schema], [t].[name] AS [TableName], [c].[Name] AS [ColumnName]
+				@"SELECT SCHEMA_NAME([t].[schema_id]) AS [Schema], [t].[name] AS [TableName], [c].[Name] AS [ColumnName], [t].[object_id] AS [ObjectID]
 				FROM [sys].[tables] [t] INNER JOIN [sys].[columns] [c] ON [t].[object_id]=[c].[object_id]", null);
+
+			var dbObjects = schemaColumns.GroupBy(item => new DbObject(item.Schema, item.TableName) { ObjectID = item.ObjectID });
+			var dboDictionary = dbObjects.ToDictionary(obj => obj.Key, obj => obj.Key.ObjectID);
+
+			Dictionary<DbObject, Type> modelTypeDict = new Dictionary<DbObject, Type>();
 
 			var modelColumns = modelTypes.SelectMany(mt => mt.GetProperties().Select(pi =>
 			{
 				DbObject obj = DbObject.FromType(mt);
+				modelTypeDict.Add(obj, mt);
 				return new ColumnRef()
 				{
 					Schema = obj.Schema,
 					TableName = obj.Name,
 					ColumnName = pi.SqlColumnName(),
-					PropertyInfo = pi
+					PropertyInfo = pi					
 				};
 			}));
 
@@ -214,12 +202,25 @@ namespace Postulate.Merge
 				!_createdTables.Contains(new DbObject(mcol.Schema, mcol.TableName)) && 
 				!schemaColumns.Any(scol => mcol.Equals(scol)));
 
-			foreach (var colGroup in newColumns.GroupBy(item => new { Schema = item.Schema, TableName = item.TableName }))
-			{
-				results.Add(new AddColumns(colGroup));
+			foreach (var colGroup in newColumns.GroupBy(item => new DbObject(item.Schema, item.TableName)))
+			{				
+				if (IsTableEmpty(connection, colGroup.Key.Schema, colGroup.Key.Name))
+				{
+					results.Add(new DropTable(colGroup.Key, dboDictionary[colGroup.Key], connection));
+					results.Add(new CreateTable(modelTypeDict[colGroup.Key]));
+				}
+				else
+				{
+					results.Add(new AddColumns(colGroup));
+				}				
 			}
 
 			return results;
+		}
+
+		private bool IsTableEmpty(IDbConnection connection, string schema, string tableName)
+		{
+			return ((connection.QueryFirstOrDefault<int?>($"SELECT COUNT(1) FROM [{schema}].[{tableName}]", null) ?? 0) == 0);
 		}
 
 		public override string ToString()
