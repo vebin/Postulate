@@ -63,6 +63,17 @@ namespace Postulate.Extensions
 			return $"{typeMap[t]} {nullable}";
 		}
 
+		public static string SqlDefaultExpression(this PropertyInfo propertyInfo)
+		{
+			DefaultExpressionAttribute def;
+			if (propertyInfo.HasAttribute(out def)) return def.Expression;
+
+			InsertExpressionAttribute ins;
+			if (propertyInfo.HasAttribute(out ins) && !ins.HasParameters) return ins.Expression;
+
+			throw new Exception($"{propertyInfo.DeclaringType.Name}.{propertyInfo.Name} property does not have a [DefaultExpression] nor [InsertExpression] attribute with no parameters.");
+		}
+
 		public static Attributes.ForeignKeyAttribute GetForeignKeyAttribute(this PropertyInfo propertyInfo)
 		{
 			Attributes.ForeignKeyAttribute fk;

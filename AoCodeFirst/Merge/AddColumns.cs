@@ -37,21 +37,45 @@ namespace Postulate.Merge
 
 			var obj = DbObject.FromType(_modelType, _connection);
 			string sourceTableName = obj.ToString();
-			yield return InsertInto(sourceTableName, tempTableName);
+			
+			foreach (var cmd in InsertInto(sourceTableName, tempTableName, 
+				_columns.ToDictionary(
+					item => item.PropertyInfo.SqlColumnName(),
+					item => item.PropertyInfo.SqlDefaultExpression()))) yield return cmd;
 			
 			DropTable drop = new DropTable(obj, _connection);
 			foreach (var cmd in drop.SqlCommands()) yield return cmd;
-			
-			yield return InsertInto(tempTableName, sourceTableName);
+
+			CreateTable create = new CreateTable(_modelType);
+			foreach (var cmd in create.SqlCommands()) yield return cmd;
+
+			foreach (var cmd in InsertInto(tempTableName, sourceTableName)) yield return cmd;
 		}
 
-		private string InsertInto(string sourceTable, string targetTable)
+		private IEnumerable<string> InsertInto(string sourceTable, string targetTable, Dictionary<string, string> addColumns = null)
 		{
-			throw new NotImplementedException();
+			yield return $"SET IDENTITY_INSERT {targetTable} ON";
+
+			var selectColumns = (addColumns == null) ?
+				ModelColumnNames() :
+				ModelColumnNames().WhereNotIn(addColumns.Select(kp => kp.Key)).Concat(addColumns.Select(kp => kp.Value));
+
+			yield return $"INSERT INTO {targetTable} (\r\n\t" +
+				$"{string.Join(", ", ModelColumnNames().Select(col => $"[{col}]"))})\r\n" +
+				$"SELECT {string.Join(", ", selectColumns.Select(col => $"[{col}]"))}\r\n" +
+				$"FROM {sourceTable}";
+
+			yield return $"SET IDENTITY_INSERT {targetTable} OFF";
+		}
+
+		private IEnumerable<string> ModelColumnNames()
+		{			
+			return _modelType.GetProperties().Select(pi => pi.SqlColumnName());
 		}
 
 		private string CreateTempTable(out string tableName)
 		{
+			// make sure identity column is not identity
 			throw new NotImplementedException();
 		}
 
