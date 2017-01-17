@@ -31,34 +31,31 @@ namespace Postulate.Merge
 
 		public override IEnumerable<string> SqlCommands()
 		{
-			string tempTableName;
-			string tempTableCreate = CreateTempTable(out tempTableName);
-			yield return tempTableCreate;
-
 			var obj = DbObject.FromType(_modelType, _connection);
 			string sourceTableName = obj.ToString();
+			string tempTableName = $"[{obj.Schema}].[{obj.Name}_temp]";
 			
-			foreach (var cmd in InsertInto(sourceTableName, tempTableName, 
-				_columns.ToDictionary(
-					item => item.PropertyInfo.SqlColumnName(),
-					item => item.PropertyInfo.SqlDefaultExpression()))) yield return cmd;
-			
+			yield return SelectInto(obj, tempTableName);
+
 			DropTable drop = new DropTable(obj, _connection);
 			foreach (var cmd in drop.SqlCommands()) yield return cmd;
 
 			CreateTable create = new CreateTable(_modelType);
 			foreach (var cmd in create.SqlCommands()) yield return cmd;
 
-			foreach (var cmd in InsertInto(tempTableName, sourceTableName)) yield return cmd;
+			foreach (var cmd in InsertInto(tempTableName, sourceTableName, 
+				_columns.ToDictionary(
+					item => item.PropertyInfo.SqlColumnName(),
+					item => item.PropertyInfo.SqlDefaultExpression()))) yield return cmd;
+			
+			yield return $"DROP TABLE {tempTableName}";
 		}
 
-		private IEnumerable<string> InsertInto(string sourceTable, string targetTable, Dictionary<string, string> addColumns = null)
+		private IEnumerable<string> InsertInto(string sourceTable, string targetTable, Dictionary<string, string> addColumns)
 		{
 			yield return $"SET IDENTITY_INSERT {targetTable} ON";
 
-			var selectColumns = (addColumns == null) ?
-				ModelColumnNames() :
-				ModelColumnNames().WhereNotIn(addColumns.Select(kp => kp.Key)).Concat(addColumns.Select(kp => kp.Value));
+			var selectColumns = ModelColumnNames().WhereNotIn(addColumns.Select(kp => kp.Key)).Concat(addColumns.Select(kp => kp.Value));
 
 			yield return $"INSERT INTO {targetTable} (\r\n\t" +
 				$"{string.Join(", ", ModelColumnNames().Select(col => $"[{col}]"))})\r\n" +
@@ -73,10 +70,9 @@ namespace Postulate.Merge
 			return _modelType.GetProperties().Select(pi => pi.SqlColumnName());
 		}
 
-		private string CreateTempTable(out string tableName)
+		private string SelectInto(DbObject sourceObject, string intoTable)
 		{
-			// make sure identity column is not identity
-			throw new NotImplementedException();
+			return $"SELECT * INTO {intoTable} FROM {sourceObject.ToString()}";
 		}
 
 		public override IEnumerable<string> ValidationErrors()

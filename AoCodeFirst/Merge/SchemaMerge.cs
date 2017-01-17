@@ -10,6 +10,7 @@ using System.Text;
 using Dapper;
 using System.ComponentModel.DataAnnotations;
 using static Postulate.Merge.AddColumns;
+using Postulate.Attributes;
 
 namespace Postulate.Merge
 {
@@ -154,8 +155,7 @@ namespace Postulate.Merge
 				"SELECT SCHEMA_NAME([schema_id]) AS [Schema], [name] AS [TableName], [object_id] AS [ObjectID] FROM [sys].[tables]")
 				.Select(tbl => new DbObject(tbl.Schema, tbl.TableName) { ObjectID = tbl.ObjectID });
 
-			var deletedTables = allTables.Where(obj => !modelTypes.Any(mt => obj.Equals(mt)));			
-			_deletedTables.AddRange(deletedTables);
+			var deletedTables = allTables.Where(obj => !modelTypes.Any(mt => obj.Equals(mt)));						
 										
 			results.AddRange(deletedTables.Select(del => new DropTable(del, connection)));
 
@@ -208,8 +208,8 @@ namespace Postulate.Merge
 				!schemaColumns.Any(scol => mcol.Equals(scol)));
 
 			foreach (var colGroup in newColumns.GroupBy(item => new DbObject(item.Schema, item.TableName)))
-			{				
-				if (IsTableEmpty(connection, colGroup.Key.Schema, colGroup.Key.Name))
+			{
+				if (IsTableEmpty(connection, colGroup.Key.Schema, colGroup.Key.Name) || dcModelTypes[colGroup.Key].HasAttribute<AllowDropAttribute>())
 				{
 					results.Add(new DropTable(colGroup.Key, dcObjectIDs[colGroup.Key], connection));
 					results.Add(new CreateTable(dcModelTypes[colGroup.Key]));

@@ -66,12 +66,27 @@ namespace Postulate.Extensions
 		public static string SqlDefaultExpression(this PropertyInfo propertyInfo)
 		{
 			DefaultExpressionAttribute def;
-			if (propertyInfo.HasAttribute(out def)) return def.Expression;
+			if (propertyInfo.HasAttribute(out def)) return Quote(propertyInfo, def.Expression);
 
 			InsertExpressionAttribute ins;
-			if (propertyInfo.HasAttribute(out ins) && !ins.HasParameters) return ins.Expression;
+			if (propertyInfo.HasAttribute(out ins) && !ins.HasParameters) return Quote(propertyInfo, ins.Expression);
 
 			throw new Exception($"{propertyInfo.DeclaringType.Name}.{propertyInfo.Name} property does not have a [DefaultExpression] nor [InsertExpression] attribute with no parameters.");
+		}
+
+		private static string Quote(PropertyInfo propertyInfo, string expression)
+		{
+			string result = expression;
+
+			var quotedTypes = new Type[] { typeof(string), typeof(DateTime) };
+			if (quotedTypes.Any(t => t.Equals(propertyInfo.PropertyType)))
+			{
+				if (result.Contains("'") && !result.StartsWith("'") && !result.EndsWith("'")) result = result.Replace("'", "''");
+				if (!result.StartsWith("'")) result = "'" + result;
+				if (!result.EndsWith("'")) result = result + "'";
+			}
+
+			return result;
 		}
 
 		public static Attributes.ForeignKeyAttribute GetForeignKeyAttribute(this PropertyInfo propertyInfo)
