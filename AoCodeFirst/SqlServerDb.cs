@@ -20,10 +20,10 @@ namespace Postulate
 
 		public override void MergeSchema()
 		{
+			SchemaMerge sm = new SchemaMerge(this.GetType());
 			using (SqlConnection cn = GetConnection() as SqlConnection)
 			{
-				cn.Open();
-				SchemaMerge sm = new SchemaMerge(this.GetType(), cn);
+				cn.Open();				
 				sm.Execute(cn);
 			}
 		}

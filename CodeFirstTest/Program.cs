@@ -15,10 +15,11 @@ namespace CodeFirstTest
 			Organization.Db().Update(org, new { userName = "adamo" }, o => o.BillingRate, o => o.Description);*/
 
 			PostulateDb db = new PostulateDb();
+			SchemaMerge merge = new SchemaMerge(typeof(PostulateDb));
 			using (SqlConnection cn = db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
-				SchemaMerge merge = new SchemaMerge(typeof(PostulateDb), cn);
+				
 				foreach (var a in merge.Actions)
 				{
 					Console.WriteLine(a.ToString());
