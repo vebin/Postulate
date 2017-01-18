@@ -26,7 +26,7 @@ namespace Postulate.Merge
 				$"ALTER TABLE {DbObject.SqlServerName(_pi.DeclaringType)} ADD CONSTRAINT [{_pi.ForeignKeyName()}] FOREIGN KEY (\r\n" +
 					$"\t[{_pi.SqlColumnName()}]\r\n" +
 				$") REFERENCES {DbObject.SqlServerName(fk.PrimaryTableType)} (\r\n" +
-					$"\t[{_pi.DeclaringType.IdentityColumnName()}]\r\n" +
+					$"\t[{fk.PrimaryTableType.IdentityColumnName()}]\r\n" +
 				")";
 		}
 
@@ -40,7 +40,8 @@ namespace Postulate.Merge
 			foreach (var attr in modelType.GetCustomAttributes<ForeignKeyAttribute>()
 				.Where(attr => CreateTable.HasColumnName(modelType, attr.ColumnName)))
 			{
-				yield return modelType.GetProperty(attr.ColumnName);				
+				PropertyInfo pi = modelType.GetProperty(attr.ColumnName);
+				if (pi != null) yield return pi;				
 			}			
 		}
 
