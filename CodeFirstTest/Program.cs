@@ -20,7 +20,7 @@ namespace CodeFirstTest
 			{
 				cn.Open();
 				
-				foreach (var a in merge.Actions)
+				foreach (var a in merge.Analyze(cn))
 				{
 					Console.WriteLine(a.ToString());
 					foreach (var cmd in a.SqlCommands())

@@ -35,14 +35,12 @@ namespace Postulate.Merge
 
 	public class SchemaMerge
 	{
-		private readonly IEnumerable<Type> _modelTypes;
-		private readonly List<Action> _actions;
+		private readonly IEnumerable<Type> _modelTypes;		
 
 		private List<DbObject> _createdTables;
 
 		public SchemaMerge(Type dbType)
-		{
-			_actions = new List<Action>();
+		{			
 			_createdTables = new List<DbObject>();
 			_modelTypes = dbType.Assembly.GetTypes()
 				.Where(t =>
@@ -53,8 +51,6 @@ namespace Postulate.Merge
 					t.IsDerivedFromGeneric(typeof(DataRecord<>)));			
 		}
 
-		public IEnumerable<Action> Actions { get { return _actions; } }
-
 		public void SaveAs(string fileName)
 		{
 			using (StreamWriter writer = File.CreateText(fileName))
@@ -63,24 +59,33 @@ namespace Postulate.Merge
 			}
 		}
 
-		public void Execute(IDbConnection connection)
+		public IEnumerable<Action> Analyze(IDbConnection connection)
 		{
+			var actions = new List<Action>();
+
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
 				GetDeletedTables, GetNewTables, GetNewColumns/*
 				GetRenamedTables, GetRenamedColumns, GetRetypedColumns, GetDeletedColumns,
 				GetNewPrimaryKeys, GetDeletedPrimaryKeys*/
 			};
-			
-			foreach (var m in methods) _actions.AddRange(m.Invoke(_modelTypes, connection));
 
-			if (_actions.Any(a => !a.IsValid()))
+			foreach (var m in methods) actions.AddRange(m.Invoke(_modelTypes, connection));
+
+			return actions;
+		}
+
+		public void Execute(IDbConnection connection)
+		{
+			var actions = Analyze(connection);
+
+			if (actions.Any(a => !a.IsValid()))
 			{
-				string message = string.Join("\r\n", ValidationErrors());					
+				string message = string.Join("\r\n", ValidationErrors(actions));					
 				throw new ValidationException($"The model has one or more validation errors:\r\n{message}");
 			}
 
-			foreach (var a in _actions)
+			foreach (var a in actions)
 			{
 				Console.WriteLine(a.ToString());
 				foreach (var cmd in a.SqlCommands())
@@ -110,9 +115,9 @@ namespace Postulate.Merge
 			}
 		}
 
-		public IEnumerable<ValidationError> ValidationErrors()
+		public IEnumerable<ValidationError> ValidationErrors(IEnumerable<Action> actions)
 		{
-			return _actions.Where(a => !a.IsValid()).SelectMany(a => a.ValidationErrors(), (a, m) => new ValidationError(a, m));
+			return actions.Where(a => !a.IsValid()).SelectMany(a => a.ValidationErrors(), (a, m) => new ValidationError(a, m));
 		}
 
 		private IEnumerable<Action> GetNewTables(IEnumerable<Type> modelTypes, IDbConnection connection)
@@ -152,7 +157,8 @@ namespace Postulate.Merge
 			List<Action> results = new List<Action>();
 
 			var allTables = connection.Query(
-				"SELECT SCHEMA_NAME([schema_id]) AS [Schema], [name] AS [TableName], [object_id] AS [ObjectID] FROM [sys].[tables]")
+				@"SELECT SCHEMA_NAME([schema_id]) AS [Schema], [name] AS [TableName], [object_id] AS [ObjectID] 
+				FROM [sys].[tables] WHERE [name] NOT LIKE 'AspNet%' AND [name] NOT LIKE '__MigrationHistory'")
 				.Select(tbl => new DbObject(tbl.Schema, tbl.TableName) { ObjectID = tbl.ObjectID });
 
 			var deletedTables = allTables.Where(obj => !modelTypes.Any(mt => obj.Equals(mt)));						
@@ -229,17 +235,18 @@ namespace Postulate.Merge
 			return ((connection.QueryFirstOrDefault<int?>($"SELECT COUNT(1) FROM [{schema}].[{tableName}]", null) ?? 0) == 0);
 		}
 
-		public override string ToString()
+		public string GetSqlScript(IDbConnection connection)
 		{
+			var actions = Analyze(connection);
 			StringBuilder sb = new StringBuilder();
-			foreach (var action in _actions)
+			foreach (var action in actions)
 			{
 				foreach (var cmd in action.SqlCommands())
 				{
 					sb.Append(cmd);
 					sb.AppendLine("GO");
 					sb.AppendLine();
-				}				
+				}
 			}
 			return sb.ToString();
 		}
