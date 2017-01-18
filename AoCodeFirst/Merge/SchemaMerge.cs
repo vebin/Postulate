@@ -40,28 +40,17 @@ namespace Postulate.Merge
 
 		private List<DbObject> _createdTables;
 
-		public SchemaMerge(Type dbType, IDbConnection connection)
+		public SchemaMerge(Type dbType)
 		{
-			IDbConnection cn = connection;
+			_actions = new List<Action>();
+			_createdTables = new List<DbObject>();
 			_modelTypes = dbType.Assembly.GetTypes()
 				.Where(t =>
 					!t.Name.StartsWith("<>") &&
 					t.Namespace.Equals(dbType.Namespace) &&
 					!t.HasAttribute<NotMappedAttribute>() &&					
 					!t.IsAbstract &&					
-					t.IsDerivedFromGeneric(typeof(DataRecord<>)));
-
-			_createdTables = new List<DbObject>();
-
-			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
-			{
-				GetDeletedTables, GetNewTables, GetNewColumns/*
-				GetRenamedTables, GetRenamedColumns, GetRetypedColumns, GetDeletedColumns,
-				GetNewPrimaryKeys, GetDeletedPrimaryKeys*/
-			};
-
-			_actions = new List<Action>();
-			foreach (var m in methods) _actions.AddRange(m.Invoke(_modelTypes, cn));
+					t.IsDerivedFromGeneric(typeof(DataRecord<>)));			
 		}
 
 		public IEnumerable<Action> Actions { get { return _actions; } }
@@ -76,6 +65,15 @@ namespace Postulate.Merge
 
 		public void Execute(IDbConnection connection)
 		{
+			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
+			{
+				GetDeletedTables, GetNewTables, GetNewColumns/*
+				GetRenamedTables, GetRenamedColumns, GetRetypedColumns, GetDeletedColumns,
+				GetNewPrimaryKeys, GetDeletedPrimaryKeys*/
+			};
+			
+			foreach (var m in methods) _actions.AddRange(m.Invoke(_modelTypes, connection));
+
 			if (_actions.Any(a => !a.IsValid()))
 			{
 				string message = string.Join("\r\n", ValidationErrors());					

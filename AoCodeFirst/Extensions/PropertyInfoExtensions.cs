@@ -63,16 +63,18 @@ namespace Postulate.Extensions
 			return $"{typeMap[t]} {nullable}";
 		}
 
-		public static string SqlDefaultExpression(this PropertyInfo propertyInfo, bool required = false)
+		public static string SqlDefaultExpression(this PropertyInfo propertyInfo, bool forCreateTable = false)
 		{
+			string template = (forCreateTable) ? " DEFAULT ({0})" : "{0}";
+
 			DefaultExpressionAttribute def;
-			if (propertyInfo.HasAttribute(out def)) return Quote(propertyInfo, def.Expression);
+			if (propertyInfo.HasAttribute(out def)) return string.Format(template, Quote(propertyInfo, def.Expression));
 
 			InsertExpressionAttribute ins;
-			if (propertyInfo.HasAttribute(out ins) && !ins.HasParameters) return Quote(propertyInfo, ins.Expression);
+			if (propertyInfo.HasAttribute(out ins) && !ins.HasParameters) return string.Format(template, Quote(propertyInfo, ins.Expression));
 
-			// if the expression is not required (such as during create table), it's not necessary to go any further
-			if (!required) return null;
+			// if the expression is part of a CREATE TABLE statement, it's not necessary to go any further
+			if (forCreateTable) return null;
 
 			if (propertyInfo.AllowSqlNull()) return "NULL";
 			

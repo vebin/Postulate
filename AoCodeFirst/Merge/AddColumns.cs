@@ -46,7 +46,7 @@ namespace Postulate.Merge
 			foreach (var cmd in InsertInto(tempTableName, sourceTableName, 
 				_columns.ToDictionary(
 					item => item.PropertyInfo.SqlColumnName(),
-					item => item.PropertyInfo.SqlDefaultExpression(required:true)))) yield return cmd;
+					item => item.PropertyInfo.SqlDefaultExpression(forCreateTable:false)))) yield return cmd;
 			
 			yield return $"DROP TABLE {tempTableName}";
 		}
