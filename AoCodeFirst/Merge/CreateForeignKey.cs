@@ -26,7 +26,7 @@ namespace Postulate.Merge
 				$"ALTER TABLE {DbObject.SqlServerName(_pi.DeclaringType)} ADD CONSTRAINT [{_pi.ForeignKeyName()}] FOREIGN KEY (\r\n" +
 					$"\t[{_pi.SqlColumnName()}]\r\n" +
 				$") REFERENCES {DbObject.SqlServerName(fk.PrimaryTableType)} (\r\n" +
-					$"\t[{nameof(DataRecord<int>.Id)}]\r\n" +
+					$"\t[{_pi.DeclaringType.IdentityColumnName()}]\r\n" +
 				")";
 		}
 
