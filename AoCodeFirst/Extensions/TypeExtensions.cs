@@ -1,4 +1,6 @@
-﻿using Postulate.Merge;
+﻿using Postulate.Abstract;
+using Postulate.Attributes;
+using Postulate.Merge;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,6 +40,16 @@ namespace Postulate.Extensions
 			var obj = DbObject.FromType(type);
 			obj.SquareBraces = squareBraces;
 			return obj.ToString();
+		}
+
+		public static string IdentityColumnName(this Type type)
+		{
+			string result = SqlDb.IdentityColumnName;
+
+			IdentityColumnAttribute attr;
+			if (type.HasAttribute(out attr)) result = attr.ColumnName;
+
+			return result;
 		}
 	}
 }

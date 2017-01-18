@@ -13,8 +13,6 @@ namespace Postulate.Abstract
 {
 	public abstract class SqlGeneratorBase<TRecord, TKey> where TRecord : DataRecord<TKey>
 	{		
-		protected const string _idColumn = "Id";
-
 		private bool _squareBraces = false;
 		private string _defaultSchema = string.Empty;
 
@@ -126,7 +124,7 @@ namespace Postulate.Abstract
 
 		private static bool AllowAccess(PropertyInfo pi, Access option)
 		{
-			if (pi.CanWrite && !pi.Name.Equals(_idColumn) && !pi.GetCustomAttributes<CalculatedAttribute>().Any())
+			if (pi.CanWrite && !pi.Name.Equals(typeof(TRecord).IdentityColumnName()) && !pi.GetCustomAttributes<CalculatedAttribute>().Any())
 			{				
 				var attrs = pi.DeclaringType.GetCustomAttributes<ColumnAccessAttribute>();
 				if (attrs != null)

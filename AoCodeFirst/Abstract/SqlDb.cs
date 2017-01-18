@@ -8,6 +8,8 @@ namespace Postulate.Abstract
 	{
 		private readonly string _connectionString;
 
+		public const string IdentityColumnName = "Id";
+
 		public SqlDb(string connectionName)
 		{
 			_connectionString = ConfigurationManager.ConnectionStrings[connectionName].ConnectionString;			

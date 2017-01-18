@@ -151,7 +151,7 @@ namespace Postulate.Merge
 
 			Type keyType = FindKeyType(_modelType);
 
-			return $"[{nameof(DataRecord<int>.Id)}] {typeMap[keyType]}";
+			return $"[{_modelType.IdentityColumnName()}] {typeMap[keyType]}";
 		}
 
 		private Type FindKeyType(Type modelType)

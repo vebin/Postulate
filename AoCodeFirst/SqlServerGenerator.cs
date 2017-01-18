@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Postulate.Extensions;
 
 namespace Postulate
 {
@@ -15,12 +16,12 @@ namespace Postulate
 
 		public override string FindStatement()
 		{
-			return $"SELECT * FROM {TableName()} WHERE [{_idColumn}]=@id";
+			return $"SELECT * FROM {TableName()} WHERE [{typeof(TRecord).IdentityColumnName()}]=@id";
 		}
 
 		public override string DeleteStatement()
 		{
-			return $"DELETE {TableName()} WHERE [{_idColumn}]=@id";
+			return $"DELETE {TableName()} WHERE [{typeof(TRecord).IdentityColumnName()}]=@id";
 		}
 
 		public override string InsertStatement()
@@ -34,7 +35,7 @@ namespace Postulate
 
 		public override string UpdateStatement()
 		{
-			return $"UPDATE {TableName()} SET {string.Join(", ", UpdateExpressions())} WHERE [{_idColumn}]=@id";
+			return $"UPDATE {TableName()} SET {string.Join(", ", UpdateExpressions())} WHERE [{typeof(TRecord).IdentityColumnName()}]=@id";
 		}
 
 		public override string SelectStatement(bool allColumns = true)
