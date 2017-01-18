@@ -9,11 +9,6 @@ namespace Postulate.Merge
 		private readonly DbObject _object;
 		private readonly IEnumerable<ForeignKeyRef> _foreignKeys;
 
-		public DropTable(DbObject @object, int objectID, IDbConnection connection) : this(@object, connection)
-		{			
-			@object.ObjectID = objectID;
-		}
-
 		public DropTable(DbObject @object, IDbConnection connection) : base(MergeObjectType.Table, MergeActionType.Delete, @object.QualifiedName())
 		{
 			_object = @object;

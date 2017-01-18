@@ -23,6 +23,8 @@ namespace CodeFirstTest.Models
 		public DateTime? EffectiveDate { get; set; }
 		public decimal BillingRate { get; set; }
 
+		public DateTime? EndDate { get; set; }
+
 		public static SqlServerRowManager<Organization, int> Db()
 		{
 			return new SqlServerRowManager<Organization, int>(new PostulateDb());

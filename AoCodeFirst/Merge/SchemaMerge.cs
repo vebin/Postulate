@@ -193,7 +193,7 @@ namespace Postulate.Merge
 			var modelColumns = modelTypes.SelectMany(mt => mt.GetProperties().Select(pi =>
 			{
 				DbObject obj = DbObject.FromType(mt);
-				dcModelTypes.Add(obj, mt);
+				if (!dcModelTypes.ContainsKey(obj)) dcModelTypes.Add(obj, mt);
 				return new ColumnRef()
 				{
 					Schema = obj.Schema,
@@ -211,7 +211,8 @@ namespace Postulate.Merge
 			{
 				if (IsTableEmpty(connection, colGroup.Key.Schema, colGroup.Key.Name) || dcModelTypes[colGroup.Key].HasAttribute<AllowDropAttribute>())
 				{
-					results.Add(new DropTable(colGroup.Key, dcObjectIDs[colGroup.Key], connection));
+					colGroup.Key.ObjectID = dcObjectIDs[colGroup.Key];
+					results.Add(new DropTable(colGroup.Key, connection));
 					results.Add(new CreateTable(dcModelTypes[colGroup.Key]));
 				}
 				else

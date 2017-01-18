@@ -55,11 +55,19 @@ namespace Postulate.Merge
 		{
 			yield return $"SET IDENTITY_INSERT {targetTable} ON";
 
-			var selectColumns = ModelColumnNames().WhereNotIn(addColumns.Select(kp => kp.Key)).Concat(addColumns.Select(kp => kp.Value));
+			var insertColumns = ModelColumnNames()
+				.WhereNotIn(addColumns.Select(kp => kp.Key))
+				.Select(col => $"[{col}]")
+				.Concat(addColumns.Select(kp => $"[{kp.Key}]"));
+
+			var selectColumns = ModelColumnNames()
+				.WhereNotIn(addColumns.Select(kp => kp.Key))
+				.Select(col => $"[{col}]")
+				.Concat(addColumns.Select(kp => kp.Value));
 
 			yield return $"INSERT INTO {targetTable} (\r\n\t" +
-				$"{string.Join(", ", ModelColumnNames().Select(col => $"[{col}]"))})\r\n" +
-				$"SELECT {string.Join(", ", selectColumns.Select(col => $"[{col}]"))}\r\n" +
+				$"{string.Join(", ", insertColumns)}\r\n" +
+				$") SELECT {string.Join(", ", selectColumns)}\r\n" +
 				$"FROM {sourceTable}";
 
 			yield return $"SET IDENTITY_INSERT {targetTable} OFF";

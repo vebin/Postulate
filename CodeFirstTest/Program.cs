@@ -9,6 +9,11 @@ namespace CodeFirstTest
 	{
 		static void Main(string[] args)
 		{
+			/*Organization org = Organization.Db().Find(1);
+			org.BillingRate = 30;
+			org.Description = "This better be a good description";
+			Organization.Db().Update(org, new { userName = "adamo" }, o => o.BillingRate, o => o.Description);*/
+
 			PostulateDb db = new PostulateDb();
 			using (SqlConnection cn = db.GetConnection() as SqlConnection)
 			{
@@ -17,11 +22,16 @@ namespace CodeFirstTest
 				foreach (var a in merge.Actions)
 				{
 					Console.WriteLine(a.ToString());
+					foreach (var cmd in a.SqlCommands())
+					{
+						Console.WriteLine(cmd);
+						Console.WriteLine();
+					}
 				}
 
 				Console.WriteLine();
-				//Console.WriteLine("Executing...");
-				//merge.Execute(cn);
+				Console.WriteLine("Executing...");
+				merge.Execute(cn);
 			}
 			Console.ReadLine();
 		}

@@ -60,7 +60,7 @@ namespace Postulate.Merge
 		public static DbObject FromType(Type modelType, IDbConnection connection)
 		{
 			DbObject obj = FromType(modelType);
-			obj.ObjectID = connection.QueryFirst<int>("SELECT [object_id] FROM [sys].[tables] WHERE SCHEMA_NAME([schema])=@schema AND [name]=@name", new { schema = obj.Schema, name = obj.Name });
+			obj.ObjectID = connection.QueryFirst<int>("SELECT [object_id] FROM [sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = obj.Schema, name = obj.Name });
 			return obj;
 		}
 

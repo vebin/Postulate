@@ -71,6 +71,8 @@ namespace Postulate.Extensions
 			InsertExpressionAttribute ins;
 			if (propertyInfo.HasAttribute(out ins) && !ins.HasParameters) return Quote(propertyInfo, ins.Expression);
 
+			if (propertyInfo.AllowSqlNull()) return "NULL";
+
 			throw new Exception($"{propertyInfo.DeclaringType.Name}.{propertyInfo.Name} property does not have a [DefaultExpression] nor [InsertExpression] attribute with no parameters.");
 		}
 
