@@ -39,29 +39,32 @@ namespace Postulate.Merge
 
 		private List<DbObject> _createdTables;
 
-		public SchemaMerge(Type dbType)
+		public SchemaMerge(Type dbType, string @namespace = null)
 		{			
 			_createdTables = new List<DbObject>();
 			_modelTypes = dbType.Assembly.GetTypes()
 				.Where(t =>
 					!t.Name.StartsWith("<>") &&
-					t.Namespace.Equals(dbType.Namespace) &&
+					t.Namespace.Equals(@namespace ?? dbType.Namespace) &&
 					!t.HasAttribute<NotMappedAttribute>() &&					
 					!t.IsAbstract &&					
 					t.IsDerivedFromGeneric(typeof(DataRecord<>)));			
 		}
 
-		public void SaveAs(string fileName)
+		public IEnumerable<Type> ModelTypes { get { return _modelTypes; } }
+
+		public void SaveAs(IDbConnection connection, string fileName)
 		{
 			using (StreamWriter writer = File.CreateText(fileName))
 			{
-				writer.Write(ToString());
+				writer.Write(GetSqlScript(connection));
 			}
 		}
 
 		public IEnumerable<Action> Analyze(IDbConnection connection)
 		{
 			var actions = new List<Action>();
+			_createdTables = new List<DbObject>();
 
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
