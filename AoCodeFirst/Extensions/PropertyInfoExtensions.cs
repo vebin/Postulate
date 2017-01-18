@@ -63,7 +63,7 @@ namespace Postulate.Extensions
 			return $"{typeMap[t]} {nullable}";
 		}
 
-		public static string SqlDefaultExpression(this PropertyInfo propertyInfo)
+		public static string SqlDefaultExpression(this PropertyInfo propertyInfo, bool required = false)
 		{
 			DefaultExpressionAttribute def;
 			if (propertyInfo.HasAttribute(out def)) return Quote(propertyInfo, def.Expression);
@@ -71,8 +71,11 @@ namespace Postulate.Extensions
 			InsertExpressionAttribute ins;
 			if (propertyInfo.HasAttribute(out ins) && !ins.HasParameters) return Quote(propertyInfo, ins.Expression);
 
-			if (propertyInfo.AllowSqlNull()) return "NULL";
+			// if the expression is not required (such as during create table), it's not necessary to go any further
+			if (!required) return null;
 
+			if (propertyInfo.AllowSqlNull()) return "NULL";
+			
 			throw new Exception($"{propertyInfo.DeclaringType.Name}.{propertyInfo.Name} property does not have a [DefaultExpression] nor [InsertExpression] attribute with no parameters.");
 		}
 
