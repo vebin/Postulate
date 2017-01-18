@@ -11,6 +11,7 @@ using Dapper;
 using System.ComponentModel.DataAnnotations;
 using static Postulate.Merge.AddColumns;
 using Postulate.Attributes;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Postulate.Merge
 {
@@ -45,7 +46,8 @@ namespace Postulate.Merge
 			_modelTypes = dbType.Assembly.GetTypes()
 				.Where(t =>
 					!t.Name.StartsWith("<>") &&
-					t.Namespace.Equals(dbType.Namespace) &&					
+					t.Namespace.Equals(dbType.Namespace) &&
+					!t.HasAttribute<NotMappedAttribute>() &&					
 					!t.IsAbstract &&					
 					t.IsDerivedFromGeneric(typeof(DataRecord<>)));
 

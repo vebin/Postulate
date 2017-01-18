@@ -9,6 +9,8 @@ using System.Reflection;
 using Postulate.Validation;
 using Postulate.Attributes;
 using Dapper;
+using System.ComponentModel.DataAnnotations.Schema;
+using Postulate.Extensions;
 
 namespace Postulate.Abstract
 {
@@ -25,14 +27,21 @@ namespace Postulate.Abstract
 
 		public TKey Insert(IDbConnection connection, TRecord record, object parameters = null)
 		{
+			ThrowUnmapped();
 			Validate(record, connection);
 			return OnInsert(connection, record, parameters);
-		}		
+		}
 
 		public void Update(IDbConnection connection, TRecord record, object parameters = null)
 		{
+			ThrowUnmapped();
 			Validate(record, connection);
 			OnUpdate(connection, record, parameters);
+		}
+
+		private void ThrowUnmapped()
+		{
+			if (!IsMapped()) throw new InvalidOperationException($"The model class {typeof(TRecord).Name} is marked as [NotMapped].");
 		}
 
 		public abstract void Delete(IDbConnection connection, TRecord record, object parameters = null);
@@ -215,6 +224,11 @@ namespace Postulate.Abstract
 			if (me == null) throw new ArgumentException("expression");
 
 			return me.Member.Name;
+		}
+
+		protected bool IsMapped()
+		{
+			return !typeof(TRecord).HasAttribute<NotMappedAttribute>();
 		}
 	}
 }

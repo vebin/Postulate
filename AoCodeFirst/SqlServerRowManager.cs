@@ -9,7 +9,6 @@ using Postulate.Abstract;
 using Postulate.Attributes;
 using Postulate.Enums;
 using Postulate.Extensions;
-using Postulate.Merge;
 using System.Reflection;
 
 namespace Postulate
@@ -23,9 +22,13 @@ namespace Postulate
 			_db = db;
 			SqlServerGenerator<TRecord, TKey> sg = new SqlServerGenerator<TRecord, TKey>();
 			FindCommand = sg.FindStatement();
-			InsertCommand = sg.InsertStatement();
-			UpdateCommand = sg.UpdateStatement();
-			DeleteCommand = sg.DeleteStatement();
+
+			if (IsMapped())
+			{
+				InsertCommand = sg.InsertStatement();
+				UpdateCommand = sg.UpdateStatement();
+				DeleteCommand = sg.DeleteStatement();
+			}
 		}
 
 		public TRecord Find(TKey id)
