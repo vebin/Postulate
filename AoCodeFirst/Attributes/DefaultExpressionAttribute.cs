@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace Postulate.Attributes
 {
-	[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, AllowMultiple = false)]
 	public class DefaultExpressionAttribute : Attribute
 	{
+		private readonly string _columnName;
 		private readonly string _expression;
 
 		public DefaultExpressionAttribute(string expression)
@@ -16,6 +17,14 @@ namespace Postulate.Attributes
 			_expression = expression;
 		}
 
+		public DefaultExpressionAttribute(string columnName, string expression)
+		{
+			_columnName = columnName;
+			_expression = expression;
+		}
+
 		public string Expression { get { return _expression; } }
+
+		public string ColumnName { get { return _columnName; } }
 	}
 }

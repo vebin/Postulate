@@ -68,10 +68,11 @@ namespace Postulate.Extensions
 			string template = (forCreateTable) ? " DEFAULT ({0})" : "{0}";
 
 			DefaultExpressionAttribute def;
-			if (propertyInfo.HasAttribute(out def)) return string.Format(template, Quote(propertyInfo, def.Expression));
+			if (propertyInfo.DeclaringType.HasAttribute(out def) && propertyInfo.Name.Equals(def.ColumnName)) return string.Format(template, Quote(propertyInfo.DeclaringType, def.Expression));
+			if (propertyInfo.HasAttribute(out def)) return string.Format(template, Quote(propertyInfo.PropertyType, def.Expression));
 
 			InsertExpressionAttribute ins;
-			if (propertyInfo.HasAttribute(out ins) && !ins.HasParameters) return string.Format(template, Quote(propertyInfo, ins.Expression));
+			if (propertyInfo.HasAttribute(out ins) && !ins.HasParameters) return string.Format(template, Quote(propertyInfo.PropertyType, ins.Expression));
 
 			// if the expression is part of a CREATE TABLE statement, it's not necessary to go any further
 			if (forCreateTable) return null;
@@ -81,12 +82,12 @@ namespace Postulate.Extensions
 			throw new Exception($"{propertyInfo.DeclaringType.Name}.{propertyInfo.Name} property does not have a [DefaultExpression] nor [InsertExpression] attribute with no parameters.");
 		}
 
-		private static string Quote(PropertyInfo propertyInfo, string expression)
+		private static string Quote(Type type, string expression)
 		{
 			string result = expression;
 
 			var quotedTypes = new Type[] { typeof(string), typeof(DateTime) };
-			if (quotedTypes.Any(t => t.Equals(propertyInfo.PropertyType)))
+			if (quotedTypes.Any(t => t.Equals(type)))
 			{
 				if (result.Contains("'") && !result.StartsWith("'") && !result.EndsWith("'")) result = result.Replace("'", "''");
 				if (!result.StartsWith("'")) result = "'" + result;
