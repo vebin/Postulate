@@ -68,8 +68,8 @@ namespace Postulate.Merge
 
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
-				GetDeletedTables, GetNewTables, GetNewColumns/*
-				GetRenamedTables, GetRenamedColumns, GetRetypedColumns, GetDeletedColumns,
+				GetDeletedTables, GetNewTables, GetNewColumns, GetRetypedColumns/*
+				GetRenamedTables, GetRenamedColumns, GetDeletedColumns,
 				GetNewPrimaryKeys, GetDeletedPrimaryKeys*/
 			};
 
@@ -173,7 +173,19 @@ namespace Postulate.Merge
 
 		private IEnumerable<Action> GetRetypedColumns(IEnumerable<Type> modelTypes, IDbConnection connection)
 		{
-			throw new NotImplementedException();
+			List<Action> results = new List<Action>();
+
+			var schemaColumns = GetSchemaColumns(connection);
+			var modelColumns = modelTypes.SelectMany(t => t.GetProperties().Select(pi => new ColumnRef(pi)));
+
+			var retypedColumns = from sc in schemaColumns
+								 join mc in modelColumns on sc equals mc
+								 where !sc.DataTypeSyntax().ToLower().Equals(mc.PropertyInfo.SqlColumnType().ToLower())
+								 select new { ModelColumn = mc, SchemaColumn = sc };
+
+			results.AddRange(retypedColumns.Select(col => new RetypeColumn(col.SchemaColumn, col.ModelColumn)));
+
+			return results;
 		}
 
 		private IEnumerable<Action> GetRenamedColumns(IEnumerable<Type> modelTypes, IDbConnection connection)
@@ -190,9 +202,7 @@ namespace Postulate.Merge
 		{
 			List<Action> results = new List<Action>();
 
-			var schemaColumns = connection.Query<ColumnRef>(
-				@"SELECT SCHEMA_NAME([t].[schema_id]) AS [Schema], [t].[name] AS [TableName], [c].[Name] AS [ColumnName], [t].[object_id] AS [ObjectID]
-				FROM [sys].[tables] [t] INNER JOIN [sys].[columns] [c] ON [t].[object_id]=[c].[object_id]", null);
+			var schemaColumns = GetSchemaColumns(connection);
 
 			var dbObjects = schemaColumns.GroupBy(item => new DbObject(item.Schema, item.TableName) { ObjectID = item.ObjectID });
 			var dcObjectIDs = dbObjects.ToDictionary(obj => obj.Key, obj => obj.Key.ObjectID);
@@ -208,12 +218,12 @@ namespace Postulate.Merge
 					Schema = obj.Schema,
 					TableName = obj.Name,
 					ColumnName = pi.SqlColumnName(),
-					PropertyInfo = pi					
+					PropertyInfo = pi
 				};
 			}));
 
-			var newColumns = modelColumns.Where(mcol => 
-				!_createdTables.Contains(new DbObject(mcol.Schema, mcol.TableName)) && 
+			var newColumns = modelColumns.Where(mcol =>
+				!_createdTables.Contains(new DbObject(mcol.Schema, mcol.TableName)) &&
 				!schemaColumns.Any(scol => mcol.Equals(scol)));
 
 			foreach (var colGroup in newColumns.GroupBy(item => new DbObject(item.Schema, item.TableName)))
@@ -227,10 +237,20 @@ namespace Postulate.Merge
 				else
 				{
 					results.Add(new AddColumns(dcModelTypes[colGroup.Key], colGroup, connection));
-				}				
+				}
 			}
 
 			return results;
+		}
+
+		private static IEnumerable<ColumnRef> GetSchemaColumns(IDbConnection connection)
+		{
+			return connection.Query<ColumnRef>(
+				@"SELECT SCHEMA_NAME([t].[schema_id]) AS [Schema], [t].[name] AS [TableName], [c].[Name] AS [ColumnName], 
+					[t].[object_id] AS [ObjectID], TYPE_NAME([c].[system_type_id]) AS [DataType], 
+					[c].[max_length] AS [ByteLength], [c].[is_nullable] AS [IsNullable],
+					[c].[precision] AS [Precision], [c].[scale] as [Scale]
+				FROM [sys].[tables] [t] INNER JOIN [sys].[columns] [c] ON [t].[object_id]=[c].[object_id]", null);
 		}
 
 		private bool IsTableEmpty(IDbConnection connection, string schema, string tableName)
@@ -247,7 +267,7 @@ namespace Postulate.Merge
 				foreach (var cmd in action.SqlCommands())
 				{
 					sb.Append(cmd);
-					sb.AppendLine("GO");
+					sb.AppendLine("\r\nGO");
 					sb.AppendLine();
 				}
 			}

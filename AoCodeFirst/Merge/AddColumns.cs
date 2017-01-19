@@ -96,12 +96,43 @@ namespace Postulate.Merge
 		}
 
 		internal class ColumnRef
-		{
+		{			
+			public ColumnRef(PropertyInfo pi)
+			{
+				PropertyInfo = pi;
+
+				DbObject obj = DbObject.FromType(pi.DeclaringType);
+				Schema = obj.Schema;
+				TableName = obj.Name;
+				ColumnName = pi.SqlColumnName();
+			}
+
+			public ColumnRef()
+			{
+			}
+
 			public string Schema { get; set; }
 			public string TableName { get; set; }
 			public string ColumnName { get; set; }
 			public PropertyInfo PropertyInfo { get; set; }
 			public int ObjectID { get; set; }
+
+			public string DataType { get; set; }
+			public int ByteLength { get; set; }
+			public int Precision { get; set; }
+			public int Scale { get; set; }
+			public bool IsNullable { get; set; }
+
+			public string Length
+			{
+				get
+				{
+					if (ByteLength < 0) return "max";
+					int result = ByteLength;
+					if (DataType.ToLower().StartsWith("nvar")) result = result / 2;
+					return $"{result}";
+				}
+			}
 
 			public override bool Equals(object obj)
 			{
@@ -124,6 +155,34 @@ namespace Postulate.Merge
 			public override string ToString()
 			{
 				return $"{Schema}.{TableName}.{ColumnName}";
+			}
+
+			public string DataTypeSyntax()
+			{
+				string result = null;
+				switch (DataType)
+				{
+					case "nvarchar":
+					case "char":
+					case "varchar":
+					case "binary":
+					case "varbinary":
+						result = $"{DataType}({Length})";
+						break;
+
+					default:
+						result = DataType;
+						break;
+				}
+
+				result += (IsNullable) ? " NULL" : " NOT NULL";
+
+				return result;
+			}
+
+			public string DataTypeComparison(ColumnRef columnRef)
+			{
+				return $"{this.DataTypeSyntax()} -> {columnRef.PropertyInfo.SqlColumnType()}";
 			}
 		}
 	}

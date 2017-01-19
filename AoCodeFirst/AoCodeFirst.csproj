@@ -60,6 +60,7 @@
     <Compile Include="Merge\CreateTable.cs" />
     <Compile Include="Merge\DbObject.cs" />
     <Compile Include="Merge\DropTable.cs" />
+    <Compile Include="Merge\RetypeColumn.cs" />
     <Compile Include="Merge\SchemaMerge.cs" />
     <Compile Include="Extensions\PropertyInfoExtensions.cs" />
     <Compile Include="Profiler.cs" />
