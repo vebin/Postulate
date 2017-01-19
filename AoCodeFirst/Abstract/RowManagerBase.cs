@@ -14,6 +14,8 @@ using Postulate.Extensions;
 
 namespace Postulate.Abstract
 {
+	public delegate void SavingRecordHandler<TRecord>(IDbConnection connection, SaveAction action, TRecord record);
+
 	public abstract class RowManagerBase<TRecord, TKey> where TRecord : DataRecord<TKey>
 	{
 		public int RecordsPerPage { get; set; } = 50;
@@ -72,6 +74,8 @@ namespace Postulate.Abstract
 			record = FindWhere(connection, criteria, parameters);
 			return (record != null);
 		}
+
+		public SavingRecordHandler<TRecord> SavingRecord { get; set; }
 
 		public string DefaultQuery { get; set; }
 		public string FindCommand { get; set; }		
@@ -138,14 +142,15 @@ namespace Postulate.Abstract
 
 		public void Save(IDbConnection connection, TRecord record, out SaveAction action, object parameters = null)
 		{
+			action = (record.IsNewRecord()) ? SaveAction.Insert : SaveAction.Update;
+			SavingRecord?.Invoke(connection, action, record);
+
 			if (record.IsNewRecord())
-			{
-				action = SaveAction.Insert;
+			{			
 				record.Id = Insert(connection, record, parameters);
 			}
 			else
-			{
-				action = SaveAction.Update;
+			{				
 				Update(connection, record, parameters);
 			}
 		}
