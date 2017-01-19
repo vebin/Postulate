@@ -68,8 +68,8 @@ namespace Postulate.Merge
 
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
-				GetDeletedTables, GetNewTables, GetNewColumns, GetRetypedColumns/*
-				GetRenamedTables, GetRenamedColumns, GetDeletedColumns,
+				GetDeletedTables, GetNewTables, GetNewColumns, GetRetypedColumns, GetDeletedColumns/*
+				GetRenamedTables, GetRenamedColumns, 
 				GetNewPrimaryKeys, GetDeletedPrimaryKeys*/
 			};
 
@@ -77,6 +77,7 @@ namespace Postulate.Merge
 
 			return actions;
 		}
+
 
 		public void Execute(IDbConnection connection)
 		{
@@ -152,7 +153,23 @@ namespace Postulate.Merge
 
 		private IEnumerable<Action> GetDeletedColumns(IEnumerable<Type> modelTypes, IDbConnection connection)
 		{
-			throw new NotImplementedException();
+			List<Action> results = new List<Action>();
+
+			var schemaColumns = GetSchemaColumns(connection);
+			var modelColumns = GetModelColumns(modelTypes);
+			var deletedColumns = schemaColumns.Where(sc => 
+				!modelColumns.Any(mc => mc.Equals(sc)) && // model column does not exist
+				modelColumns.Any(mc => mc.Schema.Equals(sc.Schema) && mc.TableName.Equals(sc.TableName)) // but the containing table still does
+				);
+
+			results.AddRange(deletedColumns.Select(col => new DropColumn(col, connection)));
+
+			return results;
+		}
+
+		private IEnumerable<ColumnRef> GetModelColumns(IEnumerable<Type> types)
+		{
+			return types.SelectMany(t => t.GetProperties().Select(pi => new ColumnRef(pi)));
 		}
 
 		private IEnumerable<Action> GetDeletedTables(IEnumerable<Type> modelTypes, IDbConnection connection)
@@ -176,7 +193,7 @@ namespace Postulate.Merge
 			List<Action> results = new List<Action>();
 
 			var schemaColumns = GetSchemaColumns(connection);
-			var modelColumns = modelTypes.SelectMany(t => t.GetProperties().Select(pi => new ColumnRef(pi)));
+			var modelColumns = GetModelColumns(modelTypes);
 
 			var retypedColumns = from sc in schemaColumns
 								 join mc in modelColumns on sc equals mc
@@ -250,7 +267,8 @@ namespace Postulate.Merge
 					[t].[object_id] AS [ObjectID], TYPE_NAME([c].[system_type_id]) AS [DataType], 
 					[c].[max_length] AS [ByteLength], [c].[is_nullable] AS [IsNullable],
 					[c].[precision] AS [Precision], [c].[scale] as [Scale]
-				FROM [sys].[tables] [t] INNER JOIN [sys].[columns] [c] ON [t].[object_id]=[c].[object_id]", null);
+				FROM 
+					[sys].[tables] [t] INNER JOIN [sys].[columns] [c] ON [t].[object_id]=[c].[object_id]", null);
 		}
 
 		private bool IsTableEmpty(IDbConnection connection, string schema, string tableName)

@@ -29,8 +29,8 @@ namespace CodeFirstTest.Models
 		[DecimalPrecision(2, 2)]
 		public decimal QtyOnHand { get; set; }
 		public decimal ReorderQty { get; set; }		
-		[Column(TypeName = "date")]
-		public DateTime? EffectiveDate { get; set; }
+		//[Column(TypeName = "date")]
+		//public DateTime? EffectiveDate { get; set; }
 
 		public static SqlServerRowManager<Item, int> Db()
 		{
