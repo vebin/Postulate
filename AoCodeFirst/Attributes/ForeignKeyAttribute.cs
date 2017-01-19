@@ -26,9 +26,10 @@ namespace Postulate.Attributes
 		/// <summary>
 		/// On a single property, denotes a foreign key
 		/// </summary>		
-		public ForeignKeyAttribute(Type primaryTable)
+		public ForeignKeyAttribute(Type primaryTable, bool cascadeDelete = false)
 		{
 			_primaryTable = primaryTable;
+			_cascadeDelete = cascadeDelete;
 		}
 
 		public string ColumnName { get { return _columnName; } }

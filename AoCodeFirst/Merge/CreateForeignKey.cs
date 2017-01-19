@@ -22,12 +22,13 @@ namespace Postulate.Merge
 		public override IEnumerable<string> SqlCommands()
 		{
 			ForeignKeyAttribute fk = _pi.GetForeignKeyAttribute();
+			string cascadeDelete = (fk.CascadeDelete) ? " ON DELETE CASCADE" : string.Empty;
 			yield return
 				$"ALTER TABLE {DbObject.SqlServerName(_pi.DeclaringType)} ADD CONSTRAINT [{_pi.ForeignKeyName()}] FOREIGN KEY (\r\n" +
 					$"\t[{_pi.SqlColumnName()}]\r\n" +
 				$") REFERENCES {DbObject.SqlServerName(fk.PrimaryTableType)} (\r\n" +
 					$"\t[{fk.PrimaryTableType.IdentityColumnName()}]\r\n" +
-				")";
+				")" + cascadeDelete;
 		}
 
 		public static IEnumerable<PropertyInfo> GetForeignKeys(Type modelType)
