@@ -15,6 +15,7 @@ namespace Postulate.Merge
 	{
 		private readonly ColumnRef _columnRef;
 		private readonly ForeignKeyRef _dropFK;
+		private readonly IDbConnection _cn;
 		//private readonly IEnumerable<ForeignKeyRef> _foreignKeys; you won't be dropping the key usually, so there's really no need to drop dependent FKs
 
 		internal DropColumn(ColumnRef columnRef, IDbConnection connection) : base(MergeObjectType.Column, MergeActionType.Delete, columnRef.ToString())
@@ -24,15 +25,19 @@ namespace Postulate.Merge
 			ForeignKeyRef fk;
 			if (columnRef.IsForeignKey(connection, out fk)) _dropFK = fk;
 			//_foreignKeys = GetReferencingForeignKeys(connection, columnRef.ObjectID);
+			_cn = connection;
 		}
 
 		public override IEnumerable<string> SqlCommands()
 		{
-			if (_dropFK != null) yield return DropFKStatement(_dropFK);
+			if (_dropFK != null && _cn.ForeignKeyExists(_dropFK.ConstraintName)) yield return DropFKStatement(_dropFK);
 
 			//foreach (var fk in _foreignKeys) yield return DropFKStatement(fk);
 
-			yield return $"ALTER TABLE [{_columnRef.Schema}].[{_columnRef.TableName}] DROP COLUMN [{_columnRef.ColumnName}]";
+			if (_cn.ColumnExists(_columnRef.Schema, _columnRef.TableName, _columnRef.ColumnName))
+			{
+				yield return $"ALTER TABLE [{_columnRef.Schema}].[{_columnRef.TableName}] DROP COLUMN [{_columnRef.ColumnName}]";
+			}			
 		}
 
 		private string DropFKStatement(ForeignKeyRef fk)

@@ -18,7 +18,7 @@ namespace Postulate.Merge
 
 		public override IEnumerable<string> SqlCommands()
 		{
-			Type modelType = _modelColumn.DeclaringType;
+			Type modelType = _modelColumn.ReflectedType;
 			DbObject obj = DbObject.FromType(modelType);
 
 			yield return $"ALTER TABLE [{obj.Schema}].[{obj.Name}] ALTER COLUMN [{_modelColumn.SqlColumnName()}] {_modelColumn.SqlColumnType()}";
