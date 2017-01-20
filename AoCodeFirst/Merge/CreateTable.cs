@@ -133,7 +133,18 @@ namespace Postulate.Merge
 
 			results.AddRange(_modelType.GetProperties()
 				.Where(p => p.CanWrite && !p.Name.ToLower().Equals(nameof(DataRecord<int>.Id).ToLower()))
-				.Select(pi => $"[{pi.SqlColumnName()}] {pi.SqlColumnType()}{pi.SqlDefaultExpression(forCreateTable:true)}"));
+				.Select(pi => 
+					{
+						CalculatedAttribute calc;
+						if (pi.HasAttribute(out calc))
+						{
+							return $"[{pi.SqlColumnName()}] AS {calc.Expression}";
+						}
+						else
+						{
+							return $"[{pi.SqlColumnName()}] {pi.SqlColumnType()}{pi.SqlDefaultExpression(forCreateTable: true)}";
+						}						
+					}));
 
 			if (identityPos == Position.EndOfTable) results.Add(IdentityColumnSql());
 

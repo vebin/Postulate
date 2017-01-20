@@ -103,7 +103,7 @@ namespace Postulate.Merge
 			CreateForeignKeys(connection);
 		}
 
-		private void CreateForeignKeys(IDbConnection connection)
+		private IEnumerable<string> GetForeignKeys(IDbConnection connection)
 		{
 			foreach (var t in _modelTypes)
 			{
@@ -113,10 +113,15 @@ namespace Postulate.Merge
 					if (!connection.Exists("[sys].[foreign_keys] WHERE [name]=@name", new { name = fkName }))
 					{
 						var fk = new CreateForeignKey(pi);
-						foreach (var cmd in fk.SqlCommands()) connection.Execute(cmd);
+						foreach (var cmd in fk.SqlCommands()) yield return cmd;
 					}
 				}
 			}
+		}
+
+		private void CreateForeignKeys(IDbConnection connection)
+		{
+			foreach (var cmd in GetForeignKeys(connection)) connection.Execute(cmd);
 		}
 
 		public IEnumerable<ValidationError> ValidationErrors(IEnumerable<Action> actions)
@@ -289,6 +294,14 @@ namespace Postulate.Merge
 					sb.AppendLine();
 				}
 			}
+
+			foreach (var cmd in GetForeignKeys(connection))
+			{
+				sb.Append(cmd);
+				sb.AppendLine("\r\nGO");
+				sb.AppendLine();
+			}
+
 			return sb.ToString();
 		}
 

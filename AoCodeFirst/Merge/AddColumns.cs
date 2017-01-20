@@ -46,7 +46,7 @@ namespace Postulate.Merge
 			foreach (var cmd in create.SqlCommands()) yield return cmd;
 
 			foreach (var cmd in InsertInto(tempTableName, sourceTableName, 
-				_columns.ToDictionary(
+				_columns.Where(cr => !cr.PropertyInfo.HasAttribute<CalculatedAttribute>()).ToDictionary(
 					item => item.PropertyInfo.SqlColumnName(),
 					item => item.PropertyInfo.SqlDefaultExpression(forCreateTable:false)))) yield return cmd;
 			
@@ -77,7 +77,7 @@ namespace Postulate.Merge
 
 		private IEnumerable<string> ModelColumnNames()
 		{			
-			return _modelType.GetProperties().Select(pi => pi.SqlColumnName());
+			return _modelType.GetProperties().Where(pi => !pi.HasAttribute<CalculatedAttribute>()).Select(pi => pi.SqlColumnName());
 		}
 
 		private string SelectInto(DbObject sourceObject, string intoTable)

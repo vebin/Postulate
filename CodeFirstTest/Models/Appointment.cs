@@ -1,16 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Postulate.Attributes;
 
 namespace CodeFirstTest.Models
 {
 	public class Appointment : DefaultTable
 	{
 		public int OrganizationID { get; set; }
+
+		//[Postulate.Attributes.ForeignKey(typeof(Customer))]
+		//public int CustomerId { get; set; }
 
 		[Column(TypeName = "date")]
 		public DateTime Date { get; set; }		

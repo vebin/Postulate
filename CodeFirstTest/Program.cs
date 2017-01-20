@@ -31,8 +31,8 @@ namespace CodeFirstTest
 				}
 
 				Console.WriteLine();
-				//Console.WriteLine("Executing...");
-				//merge.Execute(cn);
+				Console.WriteLine("Executing...");
+				merge.Execute(cn);
 			}
 			Console.ReadLine();
 		}

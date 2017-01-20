@@ -25,6 +25,9 @@ namespace CodeFirstTest.Models
 
 		public DateTime? EndDate { get; set; }
 
+		[Calculated("DATEDIFF(d, [EffectiveDate], [EndDate])")]
+		public int? ContractLength { get; set; }
+
 		public static SqlServerRowManager<Organization, int> Db()
 		{
 			return new SqlServerRowManager<Organization, int>(new PostulateDb());
