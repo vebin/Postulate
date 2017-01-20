@@ -15,6 +15,7 @@ using Postulate.Extensions;
 namespace Postulate.Abstract
 {
 	public delegate void SavingRecordHandler<TRecord>(IDbConnection connection, SaveAction action, TRecord record);
+	public delegate void RecordSavedHandler<TRecord>(IDbConnection connection, SaveAction action, TRecord record);
 
 	public abstract class RowManagerBase<TRecord, TKey> where TRecord : DataRecord<TKey>
 	{
@@ -76,6 +77,7 @@ namespace Postulate.Abstract
 		}
 
 		public SavingRecordHandler<TRecord> SavingRecord { get; set; }
+		public RecordSavedHandler<TRecord> RecordSaved { get; set; }
 
 		public string DefaultQuery { get; set; }
 		public string FindCommand { get; set; }		
@@ -121,8 +123,11 @@ namespace Postulate.Abstract
 				var validationAttr = prop.GetCustomAttributes<System.ComponentModel.DataAnnotations.ValidationAttribute>();
 				foreach (var attr in validationAttr)
 				{
-					object value = prop.GetValue(record);
-					if (!attr.IsValid(value)) yield return attr.FormatErrorMessage(prop.Name);
+					if (!IsRequiredWithInsertExpression(prop))
+					{
+						object value = prop.GetValue(record);
+						if (!attr.IsValid(value)) yield return attr.FormatErrorMessage(prop.Name);
+					}
 				}
 			}
 
@@ -132,6 +137,12 @@ namespace Postulate.Abstract
 				var errors = validateable.Validate(connection);
 				foreach (var err in errors) yield return err;
 			}
+		}
+
+		private bool IsRequiredWithInsertExpression(PropertyInfo prop)
+		{
+			// required properties with an insert expression should not be validated as a regular required field
+			return prop.HasAttribute<InsertExpressionAttribute>() && prop.HasAttribute<RequiredAttribute>();
 		}
 
 		public void Save(IDbConnection connection, TRecord record, object parameters = null)
@@ -153,6 +164,8 @@ namespace Postulate.Abstract
 			{				
 				Update(connection, record, parameters);
 			}
+
+			RecordSaved?.Invoke(connection, action, record);
 		}
 
 		public bool TrySave(IDbConnection connection, TRecord record, out SaveAction action, out Exception exception, object parameters = null)
