@@ -142,7 +142,7 @@ namespace Postulate.Abstract
 		private bool IsRequiredWithInsertExpression(PropertyInfo prop, System.ComponentModel.DataAnnotations.ValidationAttribute attr)
 		{
 			// required properties with an insert expression should not be validated as a regular required field
-			return prop.HasAttribute<InsertExpressionAttribute>() && attr.GetType().Equals(typeof(RequiredAttribute)));
+			return prop.HasAttribute<InsertExpressionAttribute>() && attr.GetType().Equals(typeof(RequiredAttribute));
 		}
 
 		public void Save(IDbConnection connection, TRecord record, object parameters = null)
