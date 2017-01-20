@@ -22,6 +22,7 @@ namespace Postulate
 			_db = db;
 			SqlServerGenerator<TRecord, TKey> sg = new SqlServerGenerator<TRecord, TKey>();
 			FindCommand = sg.FindStatement();
+			DefaultQuery = sg.SelectStatement();
 
 			if (IsMapped())
 			{

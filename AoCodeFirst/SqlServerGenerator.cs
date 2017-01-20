@@ -40,7 +40,7 @@ namespace Postulate
 
 		public override string SelectStatement(bool allColumns = true)
 		{
-			throw new NotImplementedException();
+			return $"SELECT * FROM {TableName()}";
 		}
 	}
 }
