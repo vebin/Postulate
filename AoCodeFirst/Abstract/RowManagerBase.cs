@@ -123,7 +123,7 @@ namespace Postulate.Abstract
 				var validationAttr = prop.GetCustomAttributes<System.ComponentModel.DataAnnotations.ValidationAttribute>();
 				foreach (var attr in validationAttr)
 				{
-					if (!IsRequiredWithInsertExpression(prop))
+					if (!IsRequiredWithInsertExpression(prop, attr))
 					{
 						object value = prop.GetValue(record);
 						if (!attr.IsValid(value)) yield return attr.FormatErrorMessage(prop.Name);
@@ -139,10 +139,10 @@ namespace Postulate.Abstract
 			}
 		}
 
-		private bool IsRequiredWithInsertExpression(PropertyInfo prop)
+		private bool IsRequiredWithInsertExpression(PropertyInfo prop, System.ComponentModel.DataAnnotations.ValidationAttribute attr)
 		{
 			// required properties with an insert expression should not be validated as a regular required field
-			return prop.HasAttribute<InsertExpressionAttribute>() && prop.HasAttribute<RequiredAttribute>();
+			return prop.HasAttribute<InsertExpressionAttribute>() && attr.GetType().Equals(typeof(RequiredAttribute)));
 		}
 
 		public void Save(IDbConnection connection, TRecord record, object parameters = null)
