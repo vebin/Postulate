@@ -1,6 +1,7 @@
 ﻿using Postulate.Attributes;
 using Postulate.Enums;
 using Postulate.Extensions;
+using Postulate.Merge;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -25,21 +26,8 @@ namespace Postulate.Abstract
 		public string TableName(Type tableType = null)
 		{
 			Type t = (tableType == null) ? typeof(TRecord) : tableType;
-			string result = t.Name;
 
-			TableAttribute attr = t.GetCustomAttribute<TableAttribute>();
-			if (attr != null)
-			{
-				if (!string.IsNullOrEmpty(attr.Schema)) result = $"{attr.Schema}.";
-				result += attr.Name;
-			}
-			else
-			{
-				if (!string.IsNullOrEmpty(_defaultSchema))
-				{
-					result = $"{_defaultSchema}.{t.Name}";
-				}
-			}
+			string result = DbObject.FromType(t).ToString();
 
 			if (_squareBraces) result = string.Join(".", result.Split('.').Select(s => $"[{s}]"));
 

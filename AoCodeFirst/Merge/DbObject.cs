@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using System.Data;
 using Dapper;
+using Postulate.Attributes;
 
 namespace Postulate.Merge
 {
@@ -69,12 +70,15 @@ namespace Postulate.Merge
 			string schema = "dbo";
 			string name = modelType.Name;
 
-			TableAttribute attr = modelType.GetCustomAttribute<TableAttribute>();
-			if (attr != null)
+			TableAttribute tblAttr = modelType.GetCustomAttribute<TableAttribute>();
+			if (tblAttr != null)
 			{
-				if (!string.IsNullOrEmpty(attr.Schema)) schema = attr.Schema;
-				name = attr.Name;
+				if (!string.IsNullOrEmpty(tblAttr.Schema)) schema = tblAttr.Schema;
+				name = tblAttr.Name;
 			}
+
+			SchemaAttribute schemaAttr = modelType.GetCustomAttribute<SchemaAttribute>();
+			if (schemaAttr != null) schema = schemaAttr.Schema;
 
 			return new DbObject(schema, name) { ModelType = modelType };
 		}

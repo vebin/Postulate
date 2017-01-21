@@ -52,6 +52,7 @@
     <Compile Include="Attributes\DefaultExpressionAttribute.cs" />
     <Compile Include="Attributes\IdentityColumnAttribute.cs" />
     <Compile Include="Attributes\IdentityPositionAttribute.cs" />
+    <Compile Include="Attributes\SchemaAttribute.cs" />
     <Compile Include="Extensions\ConnectionExtensions.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
     <Compile Include="Extensions\TypeExtensions.cs" />
