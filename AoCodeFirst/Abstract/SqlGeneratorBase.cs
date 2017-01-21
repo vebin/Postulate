@@ -59,7 +59,12 @@ namespace Postulate.Abstract
 		public string[] SelectableColumns(bool allColumns, bool squareBraces = false)
 		{
 			Type t = typeof(TRecord);
-			var props = t.GetProperties().Where(p => p.CanRead);
+
+			IdentityColumnAttribute idAttr;
+			string identityCol = (t.HasAttribute(out idAttr)) ? idAttr.ColumnName : SqlDb.IdentityColumnName;
+			bool useAltIdentity = (!identityCol.Equals(SqlDb.IdentityColumnName));
+
+			var props = t.GetProperties().Where(p => p.CanRead && !IsSupressedIdentity(useAltIdentity, p.SqlColumnName()));
 			var results = (allColumns) ?
 				props.Select(p => p.SqlColumnName()) :
 				props.Where(p => !p.HasAttribute<LargeValueColumn>()).Select(p => p.SqlColumnName());
@@ -67,6 +72,12 @@ namespace Postulate.Abstract
 			if (squareBraces) results = results.Select(p => $"[{p}]");
 
 			return results.ToArray();
+		}
+
+		private bool IsSupressedIdentity(bool useAltIdentity, string columnName)
+		{
+			if (useAltIdentity && columnName.Equals(SqlDb.IdentityColumnName)) return true;
+			return false;
 		}
 
 		public string[] InsertColumns()
