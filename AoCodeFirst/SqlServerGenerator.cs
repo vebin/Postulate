@@ -16,7 +16,7 @@ namespace Postulate
 
 		public override string FindStatement()
 		{
-			return $"SELECT * FROM {TableName()} WHERE [{typeof(TRecord).IdentityColumnName()}]=@id";
+			return $"SELECT {string.Join(", ", SelectableColumns(true, true))} FROM {TableName()} WHERE [{typeof(TRecord).IdentityColumnName()}]=@id";
 		}
 
 		public override string DeleteStatement()
@@ -40,7 +40,7 @@ namespace Postulate
 
 		public override string SelectStatement(bool allColumns = true)
 		{
-			return $"SELECT * FROM {TableName()}";
+			return $"SELECT {string.Join(", ", SelectableColumns(allColumns, true))} FROM {TableName()}";
 		}
 	}
 }

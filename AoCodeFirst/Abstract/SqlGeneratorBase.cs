@@ -1,11 +1,8 @@
 ﻿using Postulate.Attributes;
-using Postulate.Enums;
 using Postulate.Extensions;
 using Postulate.Merge;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
@@ -29,7 +26,7 @@ namespace Postulate.Abstract
 
 			string result = DbObject.FromType(t).ToString();
 
-			if (_squareBraces) result = string.Join(".", result.Split('.').Select(s => $"[{s}]"));
+			//if (_squareBraces) result = string.Join(".", result.Split('.').Select(s => $"[{s}]"));
 
 			return result;
 		}
@@ -65,7 +62,7 @@ namespace Postulate.Abstract
 			var props = t.GetProperties().Where(p => p.CanRead);
 			var results = (allColumns) ?
 				props.Select(p => p.SqlColumnName()) :
-				props.Where(p => p.GetCustomAttribute<LargeValueColumn>() == null).Select(p => p.SqlColumnName());
+				props.Where(p => !p.HasAttribute<LargeValueColumn>()).Select(p => p.SqlColumnName());
 
 			if (squareBraces) results = results.Select(p => $"[{p}]");
 
