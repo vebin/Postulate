@@ -57,7 +57,7 @@ namespace Postulate
 
 		public override TRecord FindWhere(IDbConnection connection, string criteria, object parameters)
 		{
-			return connection.QueryFirst<TRecord>($"{DefaultQuery} WHERE {criteria}", parameters);
+			return connection.QueryFirstOrDefault<TRecord>($"{DefaultQuery} WHERE {criteria}", parameters);
 		}
 
 		public void Save(TRecord record, out SaveAction action, object parameters = null)
