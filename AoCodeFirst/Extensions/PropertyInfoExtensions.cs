@@ -59,6 +59,7 @@ namespace Postulate.Extensions
 
 			Type t = propertyInfo.PropertyType;
 			if (t.IsGenericType) t = t.GenericTypeArguments[0];
+			if (t.IsEnum) t = t.GetEnumUnderlyingType();
 
 			return $"{typeMap[t]} {nullable}";
 		}
