@@ -46,7 +46,7 @@ namespace Postulate.Merge
 				.Where(t =>
 					!t.Name.StartsWith("<>") &&
 					t.Namespace.Equals(@namespace ?? dbType.Namespace) &&
-					!t.HasAttribute<NotMappedAttribute>() &&					
+					!t.HasAttribute<NotMappedAttribute>() && !t.HasAttribute<NoSchemaMergeAttribute>() &&
 					!t.IsAbstract &&					
 					t.IsDerivedFromGeneric(typeof(DataRecord<>)));			
 		}

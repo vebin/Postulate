@@ -134,10 +134,15 @@ namespace Postulate
 
 		public override void Update(IDbConnection connection, TRecord record, object parameters, Expression<Func<TRecord, object>>[] setColumns)
 		{
-			DynamicParameters dp = new DynamicParameters(parameters);
-			dp.Add(nameof(record.Id), record.Id);
-
 			Type modelType = typeof(TRecord);
+			IdentityColumnAttribute idAttr;
+			string identityCol = (modelType.HasAttribute(out idAttr)) ? idAttr.ColumnName : SqlDb.IdentityColumnName;
+			bool useAltIdentity = (!identityCol.Equals(SqlDb.IdentityColumnName));
+			PropertyInfo piIdentity = null;
+			if (useAltIdentity) piIdentity = modelType.GetProperty(identityCol);
+
+			DynamicParameters dp = new DynamicParameters(parameters);			
+			dp.Add(identityCol, (!useAltIdentity) ? record.Id : piIdentity.GetValue(record));
 
 			string setClause = string.Join(", ", setColumns.Select(expr =>
 			{
@@ -151,9 +156,7 @@ namespace Postulate
 				return $"[{pi.SqlColumnName()}]={attr.Expression}";
 			})));
 			
-			IdentityColumnAttribute idAttr;
-			string identityCol = (modelType.HasAttribute(out idAttr)) ? idAttr.ColumnName : SqlDb.IdentityColumnName;
-			string cmd = $"UPDATE {modelType.DbObjectName(true)} SET {setClause} WHERE [{identityCol}]=@id";
+			string cmd = $"UPDATE {modelType.DbObjectName(true)} SET {setClause} WHERE [{identityCol}]=@{identityCol}";
 
 			connection.Execute(cmd, dp);
 		}
