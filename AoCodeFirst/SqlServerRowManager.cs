@@ -137,19 +137,23 @@ namespace Postulate
 			DynamicParameters dp = new DynamicParameters(parameters);
 			dp.Add(nameof(record.Id), record.Id);
 
+			Type modelType = typeof(TRecord);
+
 			string setClause = string.Join(", ", setColumns.Select(expr =>
 			{
 				string propName = PropertyNameFromLambda(expr);
 				PropertyInfo pi = typeof(TRecord).GetProperty(propName);
 				dp.Add(propName, expr.Compile().Invoke(record));
 				return $"[{pi.SqlColumnName()}]=@{propName}";				
-			}).Concat(typeof(TRecord).GetPropertiesWithAttribute<UpdateExpressionAttribute>().Select(pi =>
+			}).Concat(modelType.GetPropertiesWithAttribute<UpdateExpressionAttribute>().Select(pi =>
 			{
 				UpdateExpressionAttribute attr = pi.GetCustomAttribute<UpdateExpressionAttribute>();
 				return $"[{pi.SqlColumnName()}]={attr.Expression}";
 			})));
-
-			string cmd = $"UPDATE {typeof(TRecord).DbObjectName(true)} SET {setClause} WHERE [{nameof(record.Id)}]=@id";
+			
+			IdentityColumnAttribute idAttr;
+			string identityCol = (modelType.HasAttribute(out idAttr)) ? idAttr.ColumnName : SqlDb.IdentityColumnName;
+			string cmd = $"UPDATE {modelType.DbObjectName(true)} SET {setClause} WHERE [{identityCol}]=@id";
 
 			connection.Execute(cmd, dp);
 		}

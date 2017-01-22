@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Abstract\QueryBase.cs" />
     <Compile Include="Attributes\AllowDropAttribute.cs" />
     <Compile Include="Attributes\ColumnDefaultAttribute.cs" />
     <Compile Include="Attributes\DecimalPrecisionAttribute.cs" />
