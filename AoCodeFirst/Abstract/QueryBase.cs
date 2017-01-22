@@ -11,7 +11,7 @@ namespace Postulate.Abstract
 	public abstract class QueryBase<T>
 	{
 		private readonly string _sql;
-		private readonly SqlDb _db;
+		protected readonly SqlDb _db;
 		
 		public QueryBase(string sql, SqlDb db)
 		{
