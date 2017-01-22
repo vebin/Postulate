@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Text;
+using System.Linq;
 using static Dapper.SqlMapper;
 
 namespace Postulate
@@ -101,6 +102,12 @@ namespace Postulate
 				Profiler?.Stop(cn);
 				action.Invoke(grid);
 			}
+		}
+
+		public void QueryMultiple<T>(IEnumerable<QueryBase<T>> queries, object parameters, Action<GridReader> action, CommandType commandType = CommandType.StoredProcedure)
+		{
+			var queriesJoined = string.Join("\r\n", queries.Select(q => q.Sql));
+			QueryMultiple(queriesJoined, parameters, action, commandType);
 		}
 		#endregion
 
