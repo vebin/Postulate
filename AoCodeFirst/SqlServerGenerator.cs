@@ -16,7 +16,8 @@ namespace Postulate
 
 		public override string FindStatement()
 		{
-			return $"SELECT {string.Join(", ", SelectableColumns(true, true))} FROM {TableName()} WHERE [{typeof(TRecord).IdentityColumnName()}]=@id";
+			string identityCol = typeof(TRecord).IdentityColumnName();
+			return $"SELECT {string.Join(", ", SelectableColumns(true, true))} FROM {TableName()} WHERE [{identityCol}]=@{identityCol}";
 		}
 
 		public override string DeleteStatement()
@@ -35,7 +36,8 @@ namespace Postulate
 
 		public override string UpdateStatement()
 		{
-			return $"UPDATE {TableName()} SET {string.Join(", ", UpdateExpressions())} WHERE [{typeof(TRecord).IdentityColumnName()}]=@id";
+			string identityCol = typeof(TRecord).IdentityColumnName();
+			return $"UPDATE {TableName()} SET {string.Join(", ", UpdateExpressions())} WHERE [{identityCol}]=@{identityCol}";
 		}
 
 		public override string SelectStatement(bool allColumns = true)
