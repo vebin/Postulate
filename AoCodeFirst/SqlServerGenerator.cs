@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Postulate.Extensions;
+using Postulate.Attributes;
 
 namespace Postulate
 {
@@ -42,7 +43,9 @@ namespace Postulate
 
 		public override string SelectStatement(bool allColumns = true)
 		{
-			return $"SELECT {string.Join(", ", SelectableColumns(allColumns, true))} FROM {TableName()}";
+			QueryAliasAttribute attr;
+			string alias = (typeof(TRecord).HasAttribute(out attr)) ? $" AS [{attr.Alias}]" : string.Empty;
+			return $"SELECT {string.Join(", ", SelectableColumns(allColumns, true))} FROM {TableName()}{alias}";
 		}
 	}
 }

@@ -54,6 +54,7 @@
     <Compile Include="Attributes\NoSchemaMergeAttribute.cs" />
     <Compile Include="Attributes\IdentityColumnAttribute.cs" />
     <Compile Include="Attributes\IdentityPositionAttribute.cs" />
+    <Compile Include="Attributes\QueryAliasAttribute.cs" />
     <Compile Include="Attributes\SchemaAttribute.cs" />
     <Compile Include="Extensions\ConnectionExtensions.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
@@ -70,6 +71,7 @@
     <Compile Include="Profiler.cs" />
     <Compile Include="ProfilerWrapper.cs" />
     <Compile Include="SqlServerDb.cs" />
+    <Compile Include="SqlServerQuery.cs" />
     <Compile Include="Validation\IValidateable.cs" />
     <Compile Include="Validation\ValidationAttribute.cs" />
     <Compile Include="Attributes\CalculatedAttribute.cs" />

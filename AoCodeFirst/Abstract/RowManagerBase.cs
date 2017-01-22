@@ -23,7 +23,7 @@ namespace Postulate.Abstract
 		
 		public abstract TRecord Find(IDbConnection connection, TKey id);
 		public abstract TRecord FindWhere(IDbConnection connection, string criteria, object parameters);
-		public abstract IEnumerable<TRecord> Query(IDbConnection connection, string criteria, object parameters, int page = 0);
+		public abstract IEnumerable<TRecord> Query(IDbConnection connection, string criteria, object parameters, string orderBy, int page = 0);
 
 		protected abstract TKey OnInsert(IDbConnection connection, TRecord record, object parameters = null);
 		protected abstract void OnUpdate(IDbConnection connection, TRecord record, object parameters = null);

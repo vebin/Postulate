@@ -70,13 +70,7 @@ namespace Postulate
 			int startRecord = (page * pageSize) + 1;
 			int endRecord = (page * pageSize) + pageSize;
 
-			StringBuilder sb = new StringBuilder(baseQuery);
-
-			// insert the row number col at the start of the column list
-			int insertPoint = baseQuery.ToLower().IndexOf("select ") + "select ".Length;
-			sb.Insert(insertPoint, $"ROW_NUMBER() OVER(ORDER BY {orderBy}) AS [RowNumber], ");
-
-			string query = $"WITH [source] AS ({sb.ToString()}) SELECT * FROM [source] WHERE [RowNumber] BETWEEN {startRecord} AND {endRecord};";
+			string query = $"WITH [source] AS ({InsertRowNumberColumn(baseQuery, orderBy)}) SELECT * FROM [source] WHERE [RowNumber] BETWEEN {startRecord} AND {endRecord};";
 
 			CommandDefinition cmdDef = new CommandDefinition(query, parameters);
 			using (SqlConnection cn = GetConnection() as SqlConnection)
@@ -142,5 +136,13 @@ namespace Postulate
 			return result;
 		}
 		#endregion
+
+		public static string InsertRowNumberColumn(string query, string orderBy)
+		{
+			StringBuilder sb = new StringBuilder(query);
+			int insertPoint = query.ToLower().IndexOf("select ") + "select ".Length;
+			sb.Insert(insertPoint, $"ROW_NUMBER() OVER(ORDER BY {orderBy}) AS [RowNumber], ");
+			return sb.ToString();
+		}
 	}
 }

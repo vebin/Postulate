@@ -161,18 +161,29 @@ namespace Postulate
 			connection.Execute(cmd, dp);
 		}
 
-		public IEnumerable<TRecord> Query(string criteria, object parameters, int page = 0)
+		public IEnumerable<TRecord> Query(string criteria, object parameters, string orderBy, int page = 0)
 		{
 			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
-				return Query(cn, criteria, parameters, page);
+				return Query(cn, criteria, parameters, orderBy, page);
 			}
 		}
 
-		public override IEnumerable<TRecord> Query(IDbConnection connection, string criteria, object parameters, int page = 0)
+		public override IEnumerable<TRecord> Query(IDbConnection connection, string criteria, object parameters, string orderBy, int page = 0)
 		{
-			throw new NotImplementedException();
+			return _db.Query<TRecord>(ResolveQuery(criteria, orderBy, page), parameters);
+		}
+
+		private string ResolveQuery(string criteria, string orderBy, int page = 0)
+		{
+			int startRecord = (page * RecordsPerPage) + 1;
+			int endRecord = (page * RecordsPerPage) + RecordsPerPage;
+
+			string result = DefaultQuery;
+			if (!string.IsNullOrEmpty(criteria)) result += $" WHERE {criteria}";			
+
+			return $"WITH [source] AS ({SqlServerDb.InsertRowNumberColumn(result, orderBy)}) SELECT * FROM [source] WHERE [RowNumber] BETWEEN {startRecord} AND {endRecord};";
 		}
 	}
 }
