@@ -28,8 +28,16 @@ namespace Postulate.Abstract
 
 		public IEnumerable<TResult> Execute(IDbConnection connection, object parameters, object criteria = null)
 		{
-			DynamicParameters dp = new DynamicParameters(parameters);
-			string query = _sql;
+			DynamicParameters dp;
+			string query;
+			BuildQuery(parameters, criteria, out query, out dp);
+			return connection.Query<TResult>(query, dp);
+		}
+
+		protected void BuildQuery(object parameters, object criteria, out string query, out DynamicParameters dp)
+		{
+			dp = new DynamicParameters(parameters);
+			query = _sql;
 
 			if (criteria != null)
 			{
@@ -37,8 +45,6 @@ namespace Postulate.Abstract
 				string whereClause = GetWhereClause(criteria);
 				if (!string.IsNullOrEmpty(whereClause)) query += ((parameters != null) ? " AND " : " WHERE ") + whereClause;
 			}
-
-			return connection.Query<TResult>(query, dp);
 		}
 
 		public bool Test(IDbConnection connection)

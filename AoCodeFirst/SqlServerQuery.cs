@@ -1,4 +1,5 @@
-﻿using Postulate.Abstract;
+﻿using Dapper;
+using Postulate.Abstract;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 
@@ -17,6 +18,14 @@ namespace Postulate
 				cn.Open();
 				return Execute(cn, parameters, criteria);
 			}
+		}
+
+		public IEnumerable<TResult> Execute(object parameters, string orderBy, int pageSize, int page = 0, object criteria = null)
+		{
+			DynamicParameters dp;
+			string query;
+			BuildQuery(parameters, criteria, out query, out dp);
+			return ((SqlServerDb)_db).Query<TResult>(query, dp, orderBy, pageSize, page);
 		}
 	}
 }

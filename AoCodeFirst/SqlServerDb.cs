@@ -100,7 +100,7 @@ namespace Postulate
 
 		public void QueryMultiple<T>(IEnumerable<QueryBase<T>> queries, object parameters, Action<GridReader> action, CommandType commandType = CommandType.StoredProcedure)
 		{
-			var queriesJoined = string.Join("\r\n", queries.Select(q => q.Sql));
+			var queriesJoined = string.Join("\r\n", queries.Select(q => q.Sql + ";"));
 			QueryMultiple(queriesJoined, parameters, action, commandType);
 		}
 		#endregion
