@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 using System.Linq;
+using Postulate.Enums;
 
 namespace Postulate.Extensions
 {
@@ -139,6 +140,17 @@ namespace Postulate.Extensions
 		{
 			TAttribute attr;
 			return HasAttribute(provider, out attr);
+		}
+
+		public static bool HasSaveAction(this PropertyInfo propertyInfo, SaveAction action)
+		{
+			if (action == SaveAction.NotSet) return true;
+
+			if (propertyInfo.HasAttributeWhere<ColumnAccessAttribute>(attr => attr.Access == Access.InsertOnly) && action == SaveAction.Update) return false;
+
+			if (propertyInfo.HasAttributeWhere<ColumnAccessAttribute>(attr => attr.Access == Access.UpdateOnly) && action == SaveAction.Insert) return false;
+
+			return true;
 		}
 
 		public static bool AllowSqlNull(this PropertyInfo propertyInfo)

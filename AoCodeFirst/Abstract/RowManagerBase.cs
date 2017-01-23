@@ -31,14 +31,14 @@ namespace Postulate.Abstract
 		public TKey Insert(IDbConnection connection, TRecord record, object parameters = null)
 		{
 			ThrowUnmapped();
-			Validate(record, connection);
+			Validate(record, SaveAction.Insert, connection);
 			return OnInsert(connection, record, parameters);
 		}
 
 		public void Update(IDbConnection connection, TRecord record, object parameters = null)
 		{
 			ThrowUnmapped();
-			Validate(record, connection);
+			Validate(record, SaveAction.Update, connection);
 			OnUpdate(connection, record, parameters);
 		}
 
@@ -88,9 +88,9 @@ namespace Postulate.Abstract
 		/// <summary>
 		/// Throws a ValidationException if record fails any of its validation rules
 		/// </summary>
-		public void Validate(TRecord record, IDbConnection connection = null)
+		public void Validate(TRecord record, SaveAction action = SaveAction.NotSet, IDbConnection connection = null)
 		{
-			var errors = GetValidationErrors(record);
+			var errors = GetValidationErrors(record, action);
 			if (errors.Any())
 			{
 				string message = "The record has one or more validation errors:\r\n";
@@ -99,14 +99,14 @@ namespace Postulate.Abstract
 			}
 		}
 
-		public bool IsValid(TRecord record, IDbConnection connection = null)
+		public bool IsValid(TRecord record, SaveAction action = SaveAction.NotSet, IDbConnection connection = null)
 		{
-			return !GetValidationErrors(record, connection).Any();
+			return !GetValidationErrors(record, action, connection).Any();
 		}
 
-		public IEnumerable<string> GetValidationErrors(TRecord record, IDbConnection connection = null)
+		public IEnumerable<string> GetValidationErrors(TRecord record, SaveAction action = SaveAction.NotSet, IDbConnection connection = null)
 		{			
-			foreach (var prop in record.GetType().GetProperties())
+			foreach (var prop in record.GetType().GetProperties().Where(pi => pi.HasSaveAction(action)))
 			{
 				if (RequiredDateNotSet(prop, record))
 				{					
