@@ -4,18 +4,18 @@ using System.Data.SqlClient;
 
 namespace Postulate
 {
-	public class SqlServerQuery<T> : QueryBase<T>
+	public class SqlServerQuery<TResult> : QueryBase<TResult>
 	{
 		public SqlServerQuery(string sql, SqlServerDb db) : base (sql, db)
 		{
 		}
 
-		public IEnumerable<T> Execute(object parameters)
+		public IEnumerable<TResult> Execute(object parameters, object criteria = null)
 		{
 			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
-				return Execute(cn, parameters);
+				return Execute(cn, parameters, criteria);
 			}
 		}
 	}

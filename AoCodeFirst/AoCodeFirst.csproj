@@ -55,6 +55,7 @@
     <Compile Include="Attributes\IdentityColumnAttribute.cs" />
     <Compile Include="Attributes\IdentityPositionAttribute.cs" />
     <Compile Include="Attributes\QueryAliasAttribute.cs" />
+    <Compile Include="Attributes\QueryFieldAttribute.cs" />
     <Compile Include="Attributes\SchemaAttribute.cs" />
     <Compile Include="Extensions\ConnectionExtensions.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
