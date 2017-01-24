@@ -225,12 +225,12 @@ namespace Postulate.Merge
 			List<Action> results = new List<Action>();
 
 			var schemaPKcols = GetSchemaPrimaryKeys(connection);
-			var modelPKcols = GetModelPrimaryKeys(modelTypes);
+			var modelPKcols = GetModelPrimaryKeys(modelTypes, connection);
 
 			var newPKs = modelPKcols.Where(mpk => !schemaPKcols.Any(spk => mpk.Equals(spk)));
 			foreach (var pk in newPKs)
 			{
-				results.Add(new DropTable(new DbObject(pk.Schema, pk.TableName), connection));
+				results.Add(new DropTable(new DbObject(pk.Schema, pk.TableName) { ObjectID = pk.ObjectId }, connection));
 				results.Add(new CreateTable(pk.ModelType));
 			}
 
@@ -286,7 +286,7 @@ namespace Postulate.Merge
 		{
 			var pkColumns = connection.Query(
 				@"SELECT 
-					SCHEMA_NAME([tbl].[schema_id]) AS [Schema], [tbl].[name] AS [TableName], [col].[name] AS [ColumnName]
+					SCHEMA_NAME([tbl].[schema_id]) AS [Schema], [tbl].[name] AS [TableName], [col].[name] AS [ColumnName], [tbl].[object_id] AS [ObjectId]
 				FROM 
 					[sys].[indexes] [pk] INNER JOIN [sys].[index_columns] [pk_col] ON 
 						[pk].[object_id]=[pk_col].[object_id] AND
@@ -304,20 +304,22 @@ namespace Postulate.Merge
 				{
 					Schema = grp.Key.Schema,
 					TableName = grp.Key.TableName,
+					ObjectId = grp.First().ObjectId,
 					ColumnList = string.Join(",", grp.Select(item => item.ColumnName))
 				});
 		}
 
-		private static IEnumerable<PrimaryKeyRef> GetModelPrimaryKeys(IEnumerable<Type> types)
+		private static IEnumerable<PrimaryKeyRef> GetModelPrimaryKeys(IEnumerable<Type> types, IDbConnection connection)
 		{
 			return types.Select(t =>
 			{
-				DbObject obj = DbObject.FromType(t);
+				DbObject obj = DbObject.FromType(t, connection);
 				return new PrimaryKeyRef()
 				{
 					Schema = obj.Schema,
 					TableName = obj.Name,
 					ColumnList = string.Join(",", CreateTable.PrimaryKeyColumns(t)),
+					ObjectId = obj.ObjectID,
 					ModelType = t
 				};
 			});

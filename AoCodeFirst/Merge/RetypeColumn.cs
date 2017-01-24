@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using static Postulate.Merge.AddColumns;
 using Postulate.Extensions;
+using Postulate.Attributes;
 
 namespace Postulate.Merge
 {
@@ -21,7 +22,14 @@ namespace Postulate.Merge
 			Type modelType = _modelColumn.ReflectedType;
 			DbObject obj = DbObject.FromType(modelType);
 
+			if (_modelColumn.HasAttribute<PrimaryKeyAttribute>())
+			{
+				// issue #7, table must be dropped and rebuilt
+			}
+
 			yield return $"ALTER TABLE [{obj.Schema}].[{obj.Name}] ALTER COLUMN [{_modelColumn.SqlColumnName()}] {_modelColumn.SqlColumnType()}";
+
+			// restore PK
 		}
 
 		public override IEnumerable<string> ValidationErrors()

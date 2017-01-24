@@ -12,6 +12,7 @@ namespace Postulate.Merge
 		public string TableName { get; set; }
 		public string ColumnList { get; set; }
 		public Type ModelType { get; set; }
+		public int ObjectId { get; set; }
 
 		public override bool Equals(object obj)
 		{
