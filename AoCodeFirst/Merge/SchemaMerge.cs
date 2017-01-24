@@ -68,7 +68,8 @@ namespace Postulate.Merge
 
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
-				GetDeletedTables, GetNewTables, GetNewColumns, GetRetypedColumns, GetDeletedColumns/*
+				GetDeletedTables, GetNewTables, GetNewColumns, GetRetypedColumns,
+				GetDeletedColumns, GetRekeyedTables/*
 				GetRenamedTables, GetRenamedColumns, 
 				GetNewPrimaryKeys, GetDeletedPrimaryKeys*/
 			};
@@ -77,7 +78,6 @@ namespace Postulate.Merge
 
 			return actions;
 		}
-
 
 		public void Execute(IDbConnection connection)
 		{
@@ -220,6 +220,23 @@ namespace Postulate.Merge
 			throw new NotImplementedException();
 		}
 
+		private IEnumerable<Action> GetRekeyedTables(IEnumerable<Type> modelTypes, IDbConnection connection)
+		{
+			List<Action> results = new List<Action>();
+
+			var schemaPKcols = GetSchemaPrimaryKeys(connection);
+			var modelPKcols = GetModelPrimaryKeys(modelTypes);
+
+			var newPKs = modelPKcols.Where(mpk => !schemaPKcols.Any(spk => mpk.Equals(spk)));
+			foreach (var pk in newPKs)
+			{
+				results.Add(new DropTable(new DbObject(pk.Schema, pk.TableName), connection));
+				results.Add(new CreateTable(pk.ModelType));
+			}
+
+			return results;
+		}
+
 		private IEnumerable<Action> GetNewColumns(IEnumerable<Type> modelTypes, IDbConnection connection)
 		{
 			List<Action> results = new List<Action>();
@@ -263,6 +280,47 @@ namespace Postulate.Merge
 			}
 
 			return results;
+		}
+
+		private static IEnumerable<PrimaryKeyRef> GetSchemaPrimaryKeys(IDbConnection connection)
+		{
+			var pkColumns = connection.Query(
+				@"SELECT 
+					SCHEMA_NAME([tbl].[schema_id]) AS [Schema], [tbl].[name] AS [TableName], [col].[name] AS [ColumnName]
+				FROM 
+					[sys].[indexes] [pk] INNER JOIN [sys].[index_columns] [pk_col] ON 
+						[pk].[object_id]=[pk_col].[object_id] AND
+						[pk].[index_id]=[pk_col].[index_id]
+					INNER JOIN [sys].[objects] [tbl] ON [pk].[object_id]=[tbl].[object_id]
+					INNER JOIN [sys].[columns] [col] ON 
+						[pk_col].[object_id]=[col].[object_id] AND
+						[pk_col].[column_id]=[col].[column_id]
+				WHERE
+					[is_primary_key]=1", null);
+
+			return pkColumns
+				.GroupBy(pkcol => new { Schema = pkcol.Schema, TableName = pkcol.TableName })				
+				.Select(grp => new PrimaryKeyRef()
+				{
+					Schema = grp.Key.Schema,
+					TableName = grp.Key.TableName,
+					ColumnList = string.Join(",", grp.Select(item => item.ColumnName))
+				});
+		}
+
+		private static IEnumerable<PrimaryKeyRef> GetModelPrimaryKeys(IEnumerable<Type> types)
+		{
+			return types.Select(t =>
+			{
+				DbObject obj = DbObject.FromType(t);
+				return new PrimaryKeyRef()
+				{
+					Schema = obj.Schema,
+					TableName = obj.Name,
+					ColumnList = string.Join(",", CreateTable.PrimaryKeyColumns(t)),
+					ModelType = t
+				};
+			});
 		}
 
 		private static IEnumerable<ColumnRef> GetSchemaColumns(IDbConnection connection)

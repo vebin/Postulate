@@ -107,12 +107,17 @@ namespace Postulate.Merge
 		}
 
 		protected IEnumerable<string> PrimaryKeyColumns()
-		{			
-			var pkColumns = _modelType.GetProperties().Where(pi => pi.HasAttribute<PrimaryKeyAttribute>()).Select(pi => pi.SqlColumnName());
+		{
+			return PrimaryKeyColumns(_modelType);
+		}
+
+		public static IEnumerable<string> PrimaryKeyColumns(Type modelType)
+		{
+			var pkColumns = modelType.GetProperties().Where(pi => pi.HasAttribute<PrimaryKeyAttribute>()).Select(pi => pi.SqlColumnName());
 
 			if (pkColumns.Any()) return pkColumns;
 
-			return new string[] { nameof(DataRecord<int>.Id) };
+			return new string[] { modelType.IdentityColumnName() };
 		}
 
 		private string CreateTablePrimaryKey()
