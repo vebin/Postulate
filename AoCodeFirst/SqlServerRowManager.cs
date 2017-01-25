@@ -192,7 +192,7 @@ namespace Postulate
 			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
-				SaveChanges(cn, record);
+				CaptureChanges(cn, record);
 			}
 		}
 

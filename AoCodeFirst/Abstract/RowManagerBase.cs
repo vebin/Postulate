@@ -20,7 +20,8 @@ namespace Postulate.Abstract
 	public abstract class RowManagerBase<TRecord, TKey> where TRecord : DataRecord<TKey>
 	{
 		public int RecordsPerPage { get; set; } = 50;
-		
+		public bool CaptureChangesOnSave { get; set; }
+
 		public abstract TRecord Find(IDbConnection connection, TKey id);
 		public abstract TRecord FindWhere(IDbConnection connection, string criteria, object parameters);
 		public abstract IEnumerable<TRecord> Query(IDbConnection connection, string criteria, object parameters, string orderBy, int page = 0);
@@ -161,7 +162,8 @@ namespace Postulate.Abstract
 				record.Id = Insert(connection, record, parameters);
 			}
 			else
-			{				
+			{
+				if (CaptureChangesOnSave) CaptureChanges(connection, record);
 				Update(connection, record, parameters);
 			}
 
@@ -223,7 +225,7 @@ namespace Postulate.Abstract
 			}).Where(vc => vc.IsChanged());
 		}
 
-		public void SaveChanges(IDbConnection connection, TRecord record)
+		public void CaptureChanges(IDbConnection connection, TRecord record)
 		{
 			var changes = GetChanges(connection, record);
 			if (changes != null && changes.Any()) OnSaveChanges(connection, record.Id, changes);			
