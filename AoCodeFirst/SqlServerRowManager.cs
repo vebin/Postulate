@@ -187,7 +187,7 @@ namespace Postulate
 			return $"WITH [source] AS ({SqlServerDb.InsertRowNumberColumn(result, orderBy)}) SELECT * FROM [source] WHERE [RowNumber] BETWEEN {startRecord} AND {endRecord};";
 		}
 
-		public void SaveChanges(TRecord record)
+		public void CaptureChanges(TRecord record)
 		{
 			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
