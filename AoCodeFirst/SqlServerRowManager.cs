@@ -260,6 +260,23 @@ namespace Postulate
 			}
 		}
 
+		protected override object OnGetChangesPropertyValue(PropertyInfo propertyInfo, object record, IDbConnection connection)
+		{
+			object result = base.OnGetChangesPropertyValue(propertyInfo, record, connection);
+
+			ForeignKeyAttribute fk;
+			DereferenceExpression dr;
+			if (propertyInfo.HasAttribute(out fk) && propertyInfo.HasAttribute(out dr))
+			{
+				DbObject obj = DbObject.FromType(fk.PrimaryTableType);
+				result = connection.Query<string>(
+					$@"SELECT {dr.Expression} FROM [{obj.Schema}].[{obj.Name}] 
+					WHERE [{fk.PrimaryTableType.IdentityColumnName()}]=@id", new { id = result });
+			}
+
+			return result;
+		}
+
 		public IEnumerable<ChangeHistory<TKey>> QueryChangeHistory(TKey id)
 		{
 			using (SqlConnection cn = _db.GetConnection() as SqlConnection)

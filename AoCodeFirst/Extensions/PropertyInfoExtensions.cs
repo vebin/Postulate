@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 using System.Linq;
 using Postulate.Enums;
+using System.Data;
 
 namespace Postulate.Extensions
 {

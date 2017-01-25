@@ -51,6 +51,7 @@
     <Compile Include="Attributes\ColumnDefaultAttribute.cs" />
     <Compile Include="Attributes\DecimalPrecisionAttribute.cs" />
     <Compile Include="Attributes\DefaultExpressionAttribute.cs" />
+    <Compile Include="Attributes\DereferenceExpression.cs" />
     <Compile Include="Attributes\NoSchemaMergeAttribute.cs" />
     <Compile Include="Attributes\IdentityColumnAttribute.cs" />
     <Compile Include="Attributes\IdentityPositionAttribute.cs" />

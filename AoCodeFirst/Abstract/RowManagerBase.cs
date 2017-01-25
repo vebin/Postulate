@@ -220,10 +220,15 @@ namespace Postulate.Abstract
 				return new PropertyChange()
 				{
 					PropertyName = pi.Name,
-					OldValue = pi.GetValue(savedRecord),
-					NewValue = pi.GetValue(record)
+					OldValue = OnGetChangesPropertyValue(pi, savedRecord, connection),
+					NewValue = OnGetChangesPropertyValue(pi, record, connection)
 				};
 			}).Where(vc => vc.IsChanged());
+		}
+
+		protected virtual object OnGetChangesPropertyValue(PropertyInfo propertyInfo, object record, IDbConnection connection)
+		{
+			return propertyInfo.GetValue(record);
 		}
 
 		public void CaptureChanges(IDbConnection connection, TRecord record)
