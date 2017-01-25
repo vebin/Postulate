@@ -213,14 +213,12 @@ namespace Postulate.Abstract
 
 			TRecord compare = Find(connection, record.Id);
 			return typeof(TRecord).GetProperties().Select(pi =>
-			{
-				object compareValue = pi.GetValue(compare);
-				object recordValue = pi.GetValue(record);
+			{								
 				return new ValueComparison()
 				{
 					PropertyName = pi.Name,
-					OldValue = compareValue,
-					NewValue = recordValue
+					OldValue = pi.GetValue(compare),
+					NewValue = pi.GetValue(record)
 				};
 			}).Where(vc => vc.IsChanged()).ToDictionary(vc => vc.PropertyName);
 		}
