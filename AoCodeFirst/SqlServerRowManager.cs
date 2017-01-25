@@ -260,6 +260,15 @@ namespace Postulate
 			}
 		}
 
+		public IEnumerable<ChangeHistory<TKey>> QueryChangeHistory(TKey id)
+		{
+			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
+			{
+				cn.Open();
+				return QueryChangeHistory(cn, id);
+			}
+		}
+
 		public override IEnumerable<ChangeHistory<TKey>> QueryChangeHistory(IDbConnection connection, TKey id)
 		{
 			DbObject obj = DbObject.FromType(typeof(TRecord));
