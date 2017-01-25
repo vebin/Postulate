@@ -11,11 +11,14 @@ using Postulate.Enums;
 using Postulate.Extensions;
 using System.Reflection;
 using Postulate.Merge;
+using Postulate.Models;
 
 namespace Postulate
 {
 	public class SqlServerRowManager<TRecord, TKey> : RowManagerBase<TRecord, TKey> where TRecord : DataRecord<TKey>
 	{
+		private const string _changesSchema = "changes";
+
 		protected readonly SqlServerDb _db;
 
 		public SqlServerRowManager(SqlServerDb db)
@@ -199,9 +202,8 @@ namespace Postulate
 		protected override void OnCaptureChanges(IDbConnection connection, TKey id, IEnumerable<PropertyChange> changes)
 		{
 			SqlConnection cn = connection as SqlConnection;
-
-			const string changesSchema = "changes";
-			if (!cn.Exists("[sys].[schemas] WHERE [name]=@name", new { name = changesSchema })) cn.Execute($"CREATE SCHEMA [{changesSchema}]");
+			
+			if (!cn.Exists("[sys].[schemas] WHERE [name]=@name", new { name = _changesSchema })) cn.Execute($"CREATE SCHEMA [{_changesSchema}]");
 
 			var typeMap = new Dictionary<Type, string>()
 			{
@@ -213,48 +215,78 @@ namespace Postulate
 			DbObject obj = DbObject.FromType(typeof(TRecord));
 			string tableName = $"{obj.Schema}_{obj.Name}";
 
-			if (!cn.Exists("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = changesSchema, name = $"{tableName}_Versions" }))
+			if (!cn.Exists("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = _changesSchema, name = $"{tableName}_Versions" }))
 			{
-				cn.Execute($@"CREATE TABLE [{changesSchema}].[{tableName}_Versions] (
+				cn.Execute($@"CREATE TABLE [{_changesSchema}].[{tableName}_Versions] (
 					[RecordId] {typeMap[typeof(TKey)]} NOT NULL,
 					[NextVersion] int NOT NULL DEFAULT (1),
-					CONSTRAINT [PK_{changesSchema}_{tableName}_Versions] PRIMARY KEY ([RecordId])
+					CONSTRAINT [PK_{_changesSchema}_{tableName}_Versions] PRIMARY KEY ([RecordId])
 				)");
 			}
 
-			if (!cn.Exists("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = changesSchema, name = tableName }))
+			if (!cn.Exists("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = _changesSchema, name = tableName }))
 			{
-				cn.Execute($@"CREATE TABLE [{changesSchema}].[{tableName}] (
+				cn.Execute($@"CREATE TABLE [{_changesSchema}].[{tableName}] (
 					[RecordId] {typeMap[typeof(TKey)]} NOT NULL,
 					[Version] int NOT NULL,	
 					[ColumnName] nvarchar(100) NOT NULL,
 					[OldValue] nvarchar(max) NULL,
 					[NewValue] nvarchar(max) NULL,
 					[DateTime] datetime NOT NULL DEFAULT (getutcdate()),
-					CONSTRAINT [PK_{changesSchema}_{obj.Name}] PRIMARY KEY ([RecordId], [Version], [ColumnName])
+					CONSTRAINT [PK_{_changesSchema}_{obj.Name}] PRIMARY KEY ([RecordId], [Version], [ColumnName])
 				)");
 			}
 
 			int version = 0;
 			while (version == 0)
 			{
-				version = cn.QueryFirstOrDefault<int>($"SELECT [NextVersion] FROM [{changesSchema}].[{tableName}_Versions] WHERE [RecordId]=@id", new { id = id });
-				if (version == 0) cn.Execute($"INSERT INTO [{changesSchema}].[{tableName}_Versions] ([RecordId]) VALUES (@id)", new { id = id });				
+				version = cn.QueryFirstOrDefault<int>($"SELECT [NextVersion] FROM [{_changesSchema}].[{tableName}_Versions] WHERE [RecordId]=@id", new { id = id });
+				if (version == 0) cn.Execute($"INSERT INTO [{_changesSchema}].[{tableName}_Versions] ([RecordId]) VALUES (@id)", new { id = id });				
 			}
-			cn.Execute($"UPDATE [{changesSchema}].[{tableName}_Versions] SET [NextVersion]=[NextVersion]+1 WHERE [RecordId]=@id", new { id = id });
+			cn.Execute($"UPDATE [{_changesSchema}].[{tableName}_Versions] SET [NextVersion]=[NextVersion]+1 WHERE [RecordId]=@id", new { id = id });
 
 			foreach (var change in changes)
 			{
 				cn.Execute(
-					$@"INSERT INTO [{changesSchema}].[{tableName}] ([RecordId], [Version], [ColumnName], [OldValue], [NewValue])
+					$@"INSERT INTO [{_changesSchema}].[{tableName}] ([RecordId], [Version], [ColumnName], [OldValue], [NewValue])
 					VALUES (@id, @version, @columnName, @oldValue, @newValue)",
-					new {
+					new
+					{
 						id = id, version = version,
 						columnName = change.PropertyName,
 						oldValue = change.OldValue ?? "<null>",
 						newValue = change.NewValue ?? "<null>"
 					});
 			}
+		}
+
+		public override IEnumerable<ChangeHistory<TKey>> QueryChangeHistory(IDbConnection connection, TKey id)
+		{
+			DbObject obj = DbObject.FromType(typeof(TRecord));
+			string tableName = $"{obj.Schema}_{obj.Name}";
+
+			var results = connection.Query<ChangeHistoryRecord<TKey>>(
+				$@"SELECT * FROM [{_changesSchema}].[{tableName}] WHERE [RecordId]=@id ORDER BY [DateTime] DESC", new { id = id });
+
+			return results.GroupBy(item => new 
+			{
+				RecordId = item.RecordId,				
+				Version = item.Version				
+			}).Select(ch =>
+			{
+				return new ChangeHistory<TKey>()
+				{
+					RecordId = ch.Key.RecordId,
+					DateTime = ch.First().DateTime,
+					Version = ch.Key.Version,
+					Properties = ch.Select(chr => new PropertyChange()
+					{
+						PropertyName = chr.ColumnName,
+						OldValue = chr.OldValue,
+						NewValue = chr.NewValue
+					})
+				};
+			});
 		}
 	}
 }

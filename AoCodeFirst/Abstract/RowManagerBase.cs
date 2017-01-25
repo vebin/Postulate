@@ -11,6 +11,7 @@ using Postulate.Attributes;
 using Dapper;
 using System.ComponentModel.DataAnnotations.Schema;
 using Postulate.Extensions;
+using Postulate.Models;
 
 namespace Postulate.Abstract
 {
@@ -230,6 +231,8 @@ namespace Postulate.Abstract
 			var changes = GetChanges(connection, record);
 			if (changes != null && changes.Any()) OnCaptureChanges(connection, record.Id, changes);			
 		}
+
+		public abstract IEnumerable<ChangeHistory<TKey>> QueryChangeHistory(IDbConnection connection, TKey id);		
 
 		protected abstract void OnCaptureChanges(IDbConnection connection, TKey id, IEnumerable<PropertyChange> changes);
 

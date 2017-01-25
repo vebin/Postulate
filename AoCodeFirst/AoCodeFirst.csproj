@@ -70,6 +70,8 @@
     <Compile Include="Merge\RetypeColumn.cs" />
     <Compile Include="Merge\SchemaMerge.cs" />
     <Compile Include="Extensions\PropertyInfoExtensions.cs" />
+    <Compile Include="Models\ChangeHistory.cs" />
+    <Compile Include="Models\ChangeHistoryRecord.cs" />
     <Compile Include="Profiler.cs" />
     <Compile Include="ProfilerWrapper.cs" />
     <Compile Include="SqlServerDb.cs" />
