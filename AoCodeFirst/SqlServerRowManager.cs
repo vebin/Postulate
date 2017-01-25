@@ -269,7 +269,7 @@ namespace Postulate
 			if (propertyInfo.HasAttribute(out fk) && propertyInfo.HasAttribute(out dr))
 			{
 				DbObject obj = DbObject.FromType(fk.PrimaryTableType);
-				result = connection.Query<string>(
+				result = connection.QueryFirst<string>(
 					$@"SELECT {dr.Expression} FROM [{obj.Schema}].[{obj.Name}] 
 					WHERE [{fk.PrimaryTableType.IdentityColumnName()}]=@id", new { id = result });
 			}
