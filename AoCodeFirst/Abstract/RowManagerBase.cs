@@ -207,6 +207,24 @@ namespace Postulate.Abstract
 			}
 		}
 
+		public Dictionary<string, ValueComparison> GetChanges(IDbConnection connection, TRecord record)
+		{
+			if (record.IsNewRecord()) return null;
+
+			TRecord compare = Find(connection, record.Id);
+			return typeof(TRecord).GetProperties().Select(pi =>
+			{
+				object compareValue = pi.GetValue(compare);
+				object recordValue = pi.GetValue(record);
+				return new ValueComparison()
+				{
+					PropertyName = pi.Name,
+					OldValue = compareValue,
+					NewValue = recordValue
+				};
+			}).Where(vc => vc.IsChanged()).ToDictionary(vc => vc.PropertyName);
+		}
+
 		private bool RequiredDateNotSet(PropertyInfo prop, TRecord record)
 		{
 			if (prop.PropertyType.Equals(typeof(DateTime)))
