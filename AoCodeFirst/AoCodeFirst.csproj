@@ -95,7 +95,7 @@
     <Compile Include="SqlServerRowManager.cs" />
     <Compile Include="Attributes\UniqueKeyAttribute.cs" />
     <Compile Include="Attributes\UpdateExpressionAttribute.cs" />
-    <Compile Include="ValueComparison.cs" />
+    <Compile Include="PropertyChange.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

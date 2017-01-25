@@ -207,21 +207,29 @@ namespace Postulate.Abstract
 			}
 		}
 
-		public Dictionary<string, ValueComparison> GetChanges(IDbConnection connection, TRecord record)
+		public IEnumerable<PropertyChange> GetChanges(IDbConnection connection, TRecord record)
 		{
 			if (record.IsNewRecord()) return null;
 
-			TRecord compare = Find(connection, record.Id);
+			TRecord savedRecord = Find(connection, record.Id);
 			return typeof(TRecord).GetProperties().Select(pi =>
-			{								
-				return new ValueComparison()
+			{
+				return new PropertyChange()
 				{
 					PropertyName = pi.Name,
-					OldValue = pi.GetValue(compare),
+					OldValue = pi.GetValue(savedRecord),
 					NewValue = pi.GetValue(record)
 				};
-			}).Where(vc => vc.IsChanged()).ToDictionary(vc => vc.PropertyName);
+			}).Where(vc => vc.IsChanged());
 		}
+
+		public void SaveChanges(IDbConnection connection, TRecord record)
+		{
+			var changes = GetChanges(connection, record);
+			if (changes != null && changes.Any()) OnSaveChanges(connection, record.Id, changes);			
+		}
+
+		protected abstract void OnSaveChanges(IDbConnection connection, TKey id, IEnumerable<PropertyChange> changes);
 
 		private bool RequiredDateNotSet(PropertyInfo prop, TRecord record)
 		{

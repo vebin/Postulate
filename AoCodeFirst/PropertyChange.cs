@@ -1,6 +1,6 @@
 ﻿namespace Postulate
 {
-	public class ValueComparison
+	public class PropertyChange
 	{
 		public string PropertyName { get; set; }
 		public object OldValue { get; set; }

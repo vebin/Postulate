@@ -10,6 +10,7 @@ using Postulate.Attributes;
 using Postulate.Enums;
 using Postulate.Extensions;
 using System.Reflection;
+using Postulate.Merge;
 
 namespace Postulate
 {
@@ -184,6 +185,76 @@ namespace Postulate
 			if (!string.IsNullOrEmpty(criteria)) result += $" WHERE {criteria}";			
 
 			return $"WITH [source] AS ({SqlServerDb.InsertRowNumberColumn(result, orderBy)}) SELECT * FROM [source] WHERE [RowNumber] BETWEEN {startRecord} AND {endRecord};";
+		}
+
+		public void SaveChanges(TRecord record)
+		{
+			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
+			{
+				cn.Open();
+				SaveChanges(cn, record);
+			}
+		}
+
+		protected override void OnSaveChanges(IDbConnection connection, TKey id, IEnumerable<PropertyChange> changes)
+		{
+			SqlConnection cn = connection as SqlConnection;
+
+			const string changesSchema = "changes";
+			if (!cn.Exists("[sys].[schemas] WHERE [name]=@name", new { name = changesSchema })) cn.Execute($"CREATE SCHEMA [{changesSchema}]");
+
+			var typeMap = new Dictionary<Type, string>()
+			{
+				{ typeof(int), "int" },
+				{ typeof(long), "bigint" },
+				{ typeof(Guid), "uniqueidentifier" }
+			};
+
+			DbObject obj = DbObject.FromType(typeof(TRecord));
+			string tableName = $"{obj.Schema}_{obj.Name}";
+
+			if (!cn.Exists("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = changesSchema, name = $"{tableName}_Versions" }))
+			{
+				cn.Execute($@"CREATE TABLE [{changesSchema}].[{tableName}_Versions] (
+					[RecordId] {typeMap[typeof(TKey)]} NOT NULL,
+					[NextVersion] int NOT NULL DEFAULT (1),
+					CONSTRAINT [PK_{changesSchema}_{tableName}_Versions] PRIMARY KEY ([RecordId])
+				)");
+			}
+
+			if (!cn.Exists("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = changesSchema, name = tableName }))
+			{
+				cn.Execute($@"CREATE TABLE [{changesSchema}].[{tableName}] (
+					[RecordId] {typeMap[typeof(TKey)]} NOT NULL,
+					[Version] int NOT NULL,	
+					[ColumnName] nvarchar(100) NOT NULL,
+					[OldValue] nvarchar(max) NULL,
+					[NewValue] nvarchar(max) NULL,
+					[DateTime] datetime NOT NULL DEFAULT (getutcdate()),
+					CONSTRAINT [PK_{changesSchema}_{obj.Name}] PRIMARY KEY ([RecordId], [Version], [ColumnName])
+				)");
+			}
+
+			int version = 0;
+			while (version == 0)
+			{
+				version = cn.QueryFirstOrDefault<int>($"SELECT [NextVersion] FROM [{changesSchema}].[{tableName}_Versions] WHERE [RecordId]=@id", new { id = id });
+				if (version == 0) cn.Execute($"INSERT INTO [{changesSchema}].[{tableName}_Versions] ([RecordId]) VALUES (@id)", new { id = id });				
+			}
+			cn.Execute($"UPDATE [{changesSchema}].[{tableName}_Versions] SET [NextVersion]=[NextVersion]+1 WHERE [RecordId]=@id", new { id = id });
+
+			foreach (var change in changes)
+			{
+				cn.Execute(
+					$@"INSERT INTO [{changesSchema}].[{tableName}] ([RecordId], [Version], [ColumnName], [OldValue], [NewValue])
+					VALUES (@id, @version, @columnName, @oldValue, @newValue)",
+					new {
+						id = id, version = version,
+						columnName = change.PropertyName,
+						oldValue = change.OldValue ?? "<null>",
+						newValue = change.NewValue ?? "<null>"
+					});
+			}
 		}
 	}
 }
