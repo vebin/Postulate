@@ -196,7 +196,7 @@ namespace Postulate
 			}
 		}
 
-		protected override void OnSaveChanges(IDbConnection connection, TKey id, IEnumerable<PropertyChange> changes)
+		protected override void OnCaptureChanges(IDbConnection connection, TKey id, IEnumerable<PropertyChange> changes)
 		{
 			SqlConnection cn = connection as SqlConnection;
 

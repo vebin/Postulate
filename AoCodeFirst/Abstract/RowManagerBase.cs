@@ -228,10 +228,10 @@ namespace Postulate.Abstract
 		public void CaptureChanges(IDbConnection connection, TRecord record)
 		{
 			var changes = GetChanges(connection, record);
-			if (changes != null && changes.Any()) OnSaveChanges(connection, record.Id, changes);			
+			if (changes != null && changes.Any()) OnCaptureChanges(connection, record.Id, changes);			
 		}
 
-		protected abstract void OnSaveChanges(IDbConnection connection, TKey id, IEnumerable<PropertyChange> changes);
+		protected abstract void OnCaptureChanges(IDbConnection connection, TKey id, IEnumerable<PropertyChange> changes);
 
 		private bool RequiredDateNotSet(PropertyInfo prop, TRecord record)
 		{
