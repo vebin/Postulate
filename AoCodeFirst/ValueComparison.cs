@@ -8,16 +8,9 @@
 
 		public bool IsChanged()
 		{
-			try
-			{
-				if (OldValue == null && NewValue == null) return false;
-				if (OldValue == null ^ OldValue == null) return true;
-				return !OldValue.Equals(NewValue);
-			}
-			catch
-			{
-				return true;
-			}
+			if (OldValue == null && NewValue == null) return false;
+			if (OldValue == null ^ NewValue == null) return true;
+			return !OldValue.Equals(NewValue);
 		}
 	}
 }
