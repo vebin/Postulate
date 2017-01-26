@@ -45,7 +45,7 @@ namespace Postulate
 			}
 		}
 
-		public override TRecord Find(IDbConnection connection, TKey id)
+		protected override TRecord OnFind(IDbConnection connection, TKey id)
 		{
 			return connection.QueryFirstOrDefault<TRecord>(FindCommand, new { id = id });
 		}
@@ -59,7 +59,7 @@ namespace Postulate
 			}
 		}
 
-		public override TRecord FindWhere(IDbConnection connection, string criteria, object parameters)
+		protected override TRecord OnFindWhere(IDbConnection connection, string criteria, object parameters)
 		{
 			return connection.QueryFirstOrDefault<TRecord>($"{DefaultQuery} WHERE {criteria}", parameters);
 		}

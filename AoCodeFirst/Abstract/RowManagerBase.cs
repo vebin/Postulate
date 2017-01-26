@@ -16,13 +16,40 @@ namespace Postulate.Abstract
 {
 	public delegate void SavingRecordHandler<TRecord>(IDbConnection connection, SaveAction action, TRecord record);
 	public delegate void RecordSavedHandler<TRecord>(IDbConnection connection, SaveAction action, TRecord record);
+	public delegate bool CheckPermissionHandler<TRecord>(IDbConnection connection, Permission permission, TRecord record);
 
 	public abstract class RowManagerBase<TRecord, TKey> where TRecord : DataRecord<TKey>
 	{
 		public int RecordsPerPage { get; set; } = 50;
 
-		public abstract TRecord Find(IDbConnection connection, TKey id);
-		public abstract TRecord FindWhere(IDbConnection connection, string criteria, object parameters);
+		public TRecord Find(IDbConnection connection, TKey id)
+		{
+			var record = OnFind(connection, id);
+			CheckFindPermission(connection, record);
+			return record;
+		}
+
+		protected abstract TRecord OnFind(IDbConnection connection, TKey id);
+
+		public TRecord FindWhere(IDbConnection connection, string criteria, object parameters)
+		{
+			var record = OnFindWhere(connection, criteria, parameters);
+			CheckFindPermission(connection, record);
+			return record;
+		}
+
+		private void CheckFindPermission(IDbConnection connection, TRecord record)
+		{
+			if (record == null) return;
+
+			if (!CheckPermission?.Invoke(connection, Permission.Read, record) ?? true)
+			{
+				throw new UnauthorizedAccessException($"Read permission was denied on the {typeof(TRecord).Name} with Id {record.Id}.");
+			}
+		}
+
+		protected abstract TRecord OnFindWhere(IDbConnection connection, string criteria, object parameters);
+
 		public abstract IEnumerable<TRecord> Query(IDbConnection connection, string criteria, object parameters, string orderBy, int page = 0);
 
 		protected abstract TKey OnInsert(IDbConnection connection, TRecord record, object parameters = null);
@@ -76,6 +103,7 @@ namespace Postulate.Abstract
 			return (record != null);
 		}
 
+		public CheckPermissionHandler<TRecord> CheckPermission { get; set; }
 		public SavingRecordHandler<TRecord> SavingRecord { get; set; }
 		public RecordSavedHandler<TRecord> RecordSaved { get; set; }
 
