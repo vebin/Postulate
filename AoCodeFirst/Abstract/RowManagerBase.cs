@@ -48,6 +48,16 @@ namespace Postulate.Abstract
 			}
 		}
 
+		private void CheckSavePermission(IDbConnection connection, TRecord record)
+		{
+			if (record == null) return;
+
+			if (!CheckPermission?.Invoke(connection, Permission.Write, record) ?? true)
+			{
+				throw new UnauthorizedAccessException($"Write permission was denied on the {typeof(TRecord).Name} with Id {record.Id}.");
+			}
+		}
+
 		protected abstract TRecord OnFindWhere(IDbConnection connection, string criteria, object parameters);
 
 		public abstract IEnumerable<TRecord> Query(IDbConnection connection, string criteria, object parameters, string orderBy, int page = 0);
@@ -181,6 +191,8 @@ namespace Postulate.Abstract
 
 		public void Save(IDbConnection connection, TRecord record, out SaveAction action, object parameters = null)
 		{
+			CheckSavePermission(connection, record);
+
 			action = (record.IsNewRecord()) ? SaveAction.Insert : SaveAction.Update;
 			SavingRecord?.Invoke(connection, action, record);
 
@@ -237,6 +249,8 @@ namespace Postulate.Abstract
 
 		public void Update(IDbConnection connection, TRecord record, object parameters, params Expression<Func<TRecord, object>>[] setColumns)
 		{
+			CheckSavePermission(connection, record);
+
 			string ignoreProps;
 			if (HasChangeTracking(out ignoreProps)) CaptureChanges(connection, record, ignoreProps);
 			OnUpdate(connection, record, parameters, setColumns);
