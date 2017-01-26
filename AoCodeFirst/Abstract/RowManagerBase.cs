@@ -15,44 +15,47 @@ using Postulate.Models;
 namespace Postulate.Abstract
 {
 	public delegate void SavingRecordHandler<TRecord>(IDbConnection connection, SaveAction action, TRecord record);
-	public delegate void RecordSavedHandler<TRecord>(IDbConnection connection, SaveAction action, TRecord record);
-	public delegate bool CheckPermissionHandler<TRecord>(IDbConnection connection, Permission permission, TRecord record);
+	public delegate void RecordSavedHandler<TRecord>(IDbConnection connection, SaveAction action, TRecord record);	
+	public delegate bool CheckReadPermissionHandler<TRecord>(IDbConnection connection, string userName, TRecord record);
+	public delegate bool CheckWritePermissionHandler<TRecord>(IDbConnection connection, string userName, TRecord record);
 
 	public abstract class RowManagerBase<TRecord, TKey> where TRecord : DataRecord<TKey>
 	{
 		public int RecordsPerPage { get; set; } = 50;
 
-		public TRecord Find(IDbConnection connection, TKey id)
+		public TRecord Find(IDbConnection connection, TKey id, string userName = null)
 		{
 			var record = OnFind(connection, id);
-			CheckFindPermission(connection, record);
+			CheckReadPermission(connection, userName, record);
 			return record;
 		}
 
 		protected abstract TRecord OnFind(IDbConnection connection, TKey id);
 
-		public TRecord FindWhere(IDbConnection connection, string criteria, object parameters)
+		public TRecord FindWhere(IDbConnection connection, string criteria, object parameters, string userName = null)
 		{
 			var record = OnFindWhere(connection, criteria, parameters);
-			CheckFindPermission(connection, record);
+			EvalReadPermission(connection, userName, record);
 			return record;
 		}
 
-		private void CheckFindPermission(IDbConnection connection, TRecord record)
+		private void EvalReadPermission(IDbConnection connection, string userName, TRecord record)
 		{
 			if (record == null) return;
+			if (string.IsNullOrEmpty(userName)) return;
 
-			if (!CheckPermission?.Invoke(connection, Permission.Read, record) ?? true)
+			if (!CheckReadPermission?.Invoke(connection, userName, record) ?? true)
 			{
 				throw new UnauthorizedAccessException($"Read permission was denied on the {typeof(TRecord).Name} with Id {record.Id}.");
 			}
 		}
 
-		private void CheckSavePermission(IDbConnection connection, TRecord record)
+		private void EvalWritePermission(IDbConnection connection, string userName, TRecord record)
 		{
 			if (record == null) return;
+			if (string.IsNullOrEmpty(userName)) return;
 
-			if (!CheckPermission?.Invoke(connection, Permission.Write, record) ?? true)
+			if (!CheckReadPermission?.Invoke(connection, userName, record) ?? true)
 			{
 				throw new UnauthorizedAccessException($"Write permission was denied on the {typeof(TRecord).Name} with Id {record.Id}.");
 			}
@@ -65,16 +68,18 @@ namespace Postulate.Abstract
 		protected abstract TKey OnInsert(IDbConnection connection, TRecord record, object parameters = null);
 		protected abstract void OnUpdate(IDbConnection connection, TRecord record, object parameters = null);
 
-		public TKey Insert(IDbConnection connection, TRecord record, object parameters = null)
-		{
+		public TKey Insert(IDbConnection connection, TRecord record, object parameters = null, string userName = null)
+		{			
 			ThrowUnmapped();
+			EvalWritePermission(connection, userName, record);
 			Validate(record, SaveAction.Insert, connection);
 			return OnInsert(connection, record, parameters);
 		}
 
-		public void Update(IDbConnection connection, TRecord record, object parameters = null)
-		{
+		public void Update(IDbConnection connection, TRecord record, object parameters = null, string userName = null)
+		{			
 			ThrowUnmapped();
+			EvalWritePermission(connection, userName, record);
 			Validate(record, SaveAction.Update, connection);
 			OnUpdate(connection, record, parameters);
 		}
@@ -113,7 +118,7 @@ namespace Postulate.Abstract
 			return (record != null);
 		}
 
-		public CheckPermissionHandler<TRecord> CheckPermission { get; set; }
+		public CheckReadPermissionHandler<TRecord> CheckReadPermission { get; set; }
 		public SavingRecordHandler<TRecord> SavingRecord { get; set; }
 		public RecordSavedHandler<TRecord> RecordSaved { get; set; }
 
@@ -183,28 +188,26 @@ namespace Postulate.Abstract
 			return prop.HasAttribute<InsertExpressionAttribute>() && attr.GetType().Equals(typeof(RequiredAttribute));
 		}
 
-		public void Save(IDbConnection connection, TRecord record, object parameters = null)
+		public void Save(IDbConnection connection, TRecord record, object parameters = null, string userName = null)
 		{
 			SaveAction action;
-			Save(connection, record, out action, parameters);
+			Save(connection, record, out action, parameters, userName);
 		}
 
-		public void Save(IDbConnection connection, TRecord record, out SaveAction action, object parameters = null)
+		public void Save(IDbConnection connection, TRecord record, out SaveAction action, object parameters = null, string userName = null)
 		{
-			CheckSavePermission(connection, record);
-
 			action = (record.IsNewRecord()) ? SaveAction.Insert : SaveAction.Update;
 			SavingRecord?.Invoke(connection, action, record);
 
 			if (record.IsNewRecord())
 			{			
-				record.Id = Insert(connection, record, parameters);
+				record.Id = Insert(connection, record, parameters, userName);
 			}
 			else
 			{
 				string ignoreProps;
 				if (HasChangeTracking(out ignoreProps)) CaptureChanges(connection, record, ignoreProps);
-				Update(connection, record, parameters);
+				Update(connection, record, parameters, userName);
 			}
 
 			RecordSaved?.Invoke(connection, action, record);
@@ -247,10 +250,14 @@ namespace Postulate.Abstract
 
 		protected abstract void OnUpdate(IDbConnection connection, TRecord record, object parameters, params Expression<Func<TRecord, object>>[] setColumns);
 
-		public void Update(IDbConnection connection, TRecord record, object parameters, params Expression<Func<TRecord, object>>[] setColumns)
+		public void Update(IDbConnection connection, TRecord record, object parameters, string userName, params Expression<Func<TRecord, object>>[] setColumns)
 		{
-			CheckSavePermission(connection, record);
+			EvalWritePermission(connection, userName, record);
+			Update(connection, record, parameters, setColumns);
+		}
 
+		public void Update(IDbConnection connection, TRecord record, object parameters, params Expression<Func<TRecord, object>>[] setColumns)
+		{		
 			string ignoreProps;
 			if (HasChangeTracking(out ignoreProps)) CaptureChanges(connection, record, ignoreProps);
 			OnUpdate(connection, record, parameters, setColumns);
