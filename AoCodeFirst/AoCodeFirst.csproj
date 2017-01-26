@@ -59,7 +59,6 @@
     <Compile Include="Attributes\QueryFieldAttribute.cs" />
     <Compile Include="Attributes\SchemaAttribute.cs" />
     <Compile Include="Attributes\TrackChangesAttribute.cs" />
-    <Compile Include="Enums\PermissionEnum.cs" />
     <Compile Include="Extensions\ConnectionExtensions.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
     <Compile Include="Extensions\TypeExtensions.cs" />
