@@ -298,12 +298,12 @@ namespace Postulate
 			return result;
 		}
 
-		public IEnumerable<ChangeHistory<TKey>> QueryChangeHistory(TKey id)
+		public IEnumerable<ChangeHistory<TKey>> QueryChangeHistory(TKey id, int timeZoneOffset = 0)
 		{
 			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
-				return QueryChangeHistory(cn, id);
+				return QueryChangeHistory(cn, id, timeZoneOffset);
 			}
 		}
 
@@ -324,7 +324,7 @@ namespace Postulate
 				return new ChangeHistory<TKey>()
 				{
 					RecordId = ch.Key.RecordId,
-					DateTime = new DateTimeOffset(ch.First().DateTime, new TimeSpan(timeZoneOffset)),
+					DateTime = ch.First().DateTime.AddHours(timeZoneOffset),
 					Version = ch.Key.Version,
 					Properties = ch.Select(chr => new PropertyChange()
 					{
