@@ -150,7 +150,7 @@ namespace Postulate
 			}
 		}
 
-		public override void Update(IDbConnection connection, TRecord record, object parameters, Expression<Func<TRecord, object>>[] setColumns)
+		protected override void OnUpdate(IDbConnection connection, TRecord record, object parameters, Expression<Func<TRecord, object>>[] setColumns)
 		{
 			Type modelType = typeof(TRecord);
 			IdentityColumnAttribute idAttr;

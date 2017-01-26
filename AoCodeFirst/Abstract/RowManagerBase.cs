@@ -8,7 +8,6 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Postulate.Validation;
 using Postulate.Attributes;
-using Dapper;
 using System.ComponentModel.DataAnnotations.Schema;
 using Postulate.Extensions;
 using Postulate.Models;
@@ -21,8 +20,6 @@ namespace Postulate.Abstract
 	public abstract class RowManagerBase<TRecord, TKey> where TRecord : DataRecord<TKey>
 	{
 		public int RecordsPerPage { get; set; } = 50;
-		public bool CaptureChangesOnSave { get; set; }
-		public string CaptureChangesIgnoreProperties { get; set; }
 
 		public abstract TRecord Find(IDbConnection connection, TKey id);
 		public abstract TRecord FindWhere(IDbConnection connection, string criteria, object parameters);
@@ -165,11 +162,25 @@ namespace Postulate.Abstract
 			}
 			else
 			{
-				if (CaptureChangesOnSave) CaptureChanges(connection, record);
+				string ignoreProps;
+				if (HasChangeTracking(out ignoreProps)) CaptureChanges(connection, record, ignoreProps);
 				Update(connection, record, parameters);
 			}
 
 			RecordSaved?.Invoke(connection, action, record);
+		}
+
+		private bool HasChangeTracking(out string ignoreProperties)
+		{
+			TrackChangesAttribute attr;
+			if (typeof(TRecord).HasAttribute(out attr))
+			{
+				ignoreProperties = attr.IgnoreProperties;
+				return true;
+			}
+			ignoreProperties = null;
+			return false;
+			
 		}
 
 		public bool TrySave(IDbConnection connection, TRecord record, out SaveAction action, out Exception exception, object parameters = null)
@@ -194,7 +205,14 @@ namespace Postulate.Abstract
 			return TrySave(connection, record, out action, out exception, parameters);
 		}
 
-		public abstract void Update(IDbConnection connection, TRecord record, object parameters, params Expression<Func<TRecord, object>>[] setColumns);
+		protected abstract void OnUpdate(IDbConnection connection, TRecord record, object parameters, params Expression<Func<TRecord, object>>[] setColumns);
+
+		public void Update(IDbConnection connection, TRecord record, object parameters, params Expression<Func<TRecord, object>>[] setColumns)
+		{
+			string ignoreProps;
+			if (HasChangeTracking(out ignoreProps)) CaptureChanges(connection, record, ignoreProps);
+			OnUpdate(connection, record, parameters, setColumns);
+		}
 		
 		public bool TryUpdate(IDbConnection connection, TRecord record, object parameters, out Exception exception, params Expression<Func<TRecord, object>>[] setColumns)
 		{
@@ -211,14 +229,14 @@ namespace Postulate.Abstract
 			}
 		}
 
-		public IEnumerable<PropertyChange> GetChanges(IDbConnection connection, TRecord record)
+		public IEnumerable<PropertyChange> GetChanges(IDbConnection connection, TRecord record, string ignoreProps = null)
 		{
 			if (record.IsNewRecord()) return null;
 
-			string[] ignoreProps = (CaptureChangesIgnoreProperties ?? string.Empty).Split(',', ';').Select(s => s.Trim()).ToArray();
+			string[] ignorePropsArray = (ignoreProps ?? string.Empty).Split(',', ';').Select(s => s.Trim()).ToArray();
 
 			TRecord savedRecord = Find(connection, record.Id);
-			return typeof(TRecord).GetProperties().Where(pi => pi.AllowAccess(Access.UpdateOnly) && !ignoreProps.Contains(pi.Name)).Select(pi =>
+			return typeof(TRecord).GetProperties().Where(pi => pi.AllowAccess(Access.UpdateOnly) && !ignorePropsArray.Contains(pi.Name)).Select(pi =>
 			{
 				return new PropertyChange()
 				{
@@ -234,9 +252,9 @@ namespace Postulate.Abstract
 			return propertyInfo.GetValue(record);
 		}
 
-		public void CaptureChanges(IDbConnection connection, TRecord record)
+		public void CaptureChanges(IDbConnection connection, TRecord record, string ignoreProps = null)
 		{
-			var changes = GetChanges(connection, record);
+			var changes = GetChanges(connection, record, ignoreProps);
 			if (changes != null && changes.Any()) OnCaptureChanges(connection, record.Id, changes);			
 		}
 
