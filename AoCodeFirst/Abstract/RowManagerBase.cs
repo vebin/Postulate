@@ -55,7 +55,7 @@ namespace Postulate.Abstract
 			if (record == null) return;
 			if (string.IsNullOrEmpty(userName)) return;
 
-			if (!CheckReadPermission?.Invoke(connection, userName, record) ?? true)
+			if (!CheckWritePermission?.Invoke(connection, userName, record) ?? true)
 			{
 				throw new UnauthorizedAccessException($"Write permission was denied on the {typeof(TRecord).Name} with Id {record.Id}.");
 			}
@@ -89,14 +89,20 @@ namespace Postulate.Abstract
 			if (!IsMapped()) throw new InvalidOperationException($"The model class {typeof(TRecord).Name} is marked as [NotMapped].");
 		}
 
-		public abstract void Delete(IDbConnection connection, TRecord record, object parameters = null);
+		public void Delete(IDbConnection connection, TRecord record, object parameters = null, string userName = null)
+		{
+			EvalWritePermission(connection, userName, record);
+			OnDelete(connection, record, parameters);
+		}
 
-		public bool TryDelete(IDbConnection connection, TRecord record, out Exception exception, object parameters = null)
+		protected abstract void OnDelete(IDbConnection connection, TRecord record, object parameters = null);
+		
+		public bool TryDelete(IDbConnection connection, TRecord record, out Exception exception, object parameters = null, string userName = null)
 		{
 			try
 			{
 				exception = null;
-				Delete(connection, record, parameters);
+				Delete(connection, record, parameters, userName);
 				return true;
 			}
 			catch (Exception exc)
@@ -119,6 +125,7 @@ namespace Postulate.Abstract
 		}
 
 		public CheckReadPermissionHandler<TRecord> CheckReadPermission { get; set; }
+		public CheckWritePermissionHandler<TRecord> CheckWritePermission { get; set; }
 		public SavingRecordHandler<TRecord> SavingRecord { get; set; }
 		public RecordSavedHandler<TRecord> RecordSaved { get; set; }
 

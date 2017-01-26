@@ -64,19 +64,19 @@ namespace Postulate
 			return connection.QueryFirstOrDefault<TRecord>($"{DefaultQuery} WHERE {criteria}", parameters);
 		}
 
-		public void Save(TRecord record, out SaveAction action, object parameters = null)
+		public void Save(TRecord record, out SaveAction action, object parameters = null, string userName = null)
 		{
 			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
-				Save(cn, record, out action, parameters);
+				Save(cn, record, out action, parameters, userName);
 			}
 		}
 
-		public void Save(TRecord record, object parameters = null)
+		public void Save(TRecord record, object parameters = null, string userName = null)
 		{
 			SaveAction action;
-			Save(record, out action, parameters);
+			Save(record, out action, parameters, userName);
 		}
 
 		public TKey Insert(TRecord record)
@@ -125,16 +125,16 @@ namespace Postulate
 			}
 		}
 
-		public void Delete(TRecord record, object parameters = null)
+		public void Delete(TRecord record, object parameters = null, string userName = null)
 		{
 			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
-				Delete(cn, record, parameters);
+				Delete(cn, record, parameters, userName);
 			}
 		}
 
-		public override void Delete(IDbConnection connection, TRecord record, object parameters = null)
+		protected override void OnDelete(IDbConnection connection, TRecord record, object parameters = null)
 		{
 			DynamicParameters dp = new DynamicParameters(parameters);
 			dp.Add("ID", record.Id);
