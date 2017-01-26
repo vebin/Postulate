@@ -258,7 +258,7 @@ namespace Postulate.Abstract
 			if (changes != null && changes.Any()) OnCaptureChanges(connection, record.Id, changes);			
 		}
 
-		public abstract IEnumerable<ChangeHistory<TKey>> QueryChangeHistory(IDbConnection connection, TKey id);		
+		public abstract IEnumerable<ChangeHistory<TKey>> QueryChangeHistory(IDbConnection connection, TKey id, int timeZoneOffset = 0);		
 
 		protected abstract void OnCaptureChanges(IDbConnection connection, TKey id, IEnumerable<PropertyChange> changes);
 

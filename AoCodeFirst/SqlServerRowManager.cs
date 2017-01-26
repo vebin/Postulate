@@ -307,7 +307,7 @@ namespace Postulate
 			}
 		}
 
-		public override IEnumerable<ChangeHistory<TKey>> QueryChangeHistory(IDbConnection connection, TKey id)
+		public override IEnumerable<ChangeHistory<TKey>> QueryChangeHistory(IDbConnection connection, TKey id, int timeZoneOffset = 0)
 		{
 			DbObject obj = DbObject.FromType(typeof(TRecord));
 			string tableName = $"{obj.Schema}_{obj.Name}";
@@ -324,7 +324,7 @@ namespace Postulate
 				return new ChangeHistory<TKey>()
 				{
 					RecordId = ch.Key.RecordId,
-					DateTime = ch.First().DateTime,
+					DateTime = new DateTimeOffset(ch.First().DateTime, new TimeSpan(timeZoneOffset)),
 					Version = ch.Key.Version,
 					Properties = ch.Select(chr => new PropertyChange()
 					{

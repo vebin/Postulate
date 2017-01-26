@@ -10,7 +10,7 @@ namespace Postulate.Models
 	{
 		public TKey RecordId { get; set; }
 		public int Version { get; set; }
-		public DateTime DateTime { get; set; }
+		public DateTimeOffset DateTime { get; set; }
 		public IEnumerable<PropertyChange> Properties { get; set; }
 	}
 }
