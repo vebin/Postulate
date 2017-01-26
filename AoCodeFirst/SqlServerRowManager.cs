@@ -90,9 +90,16 @@ namespace Postulate
 
 		protected override TKey OnInsert(IDbConnection connection, TRecord record, object parameters = null)
 		{
-			DynamicParameters dp = new DynamicParameters(record); ;
-			if (parameters != null) dp.AddDynamicParams(parameters);
-			return connection.QueryFirst<TKey>(InsertCommand, dp);
+			DynamicParameters dp = new DynamicParameters(record);
+			try
+			{				
+				if (parameters != null) dp.AddDynamicParams(parameters);
+				return connection.QueryFirst<TKey>(InsertCommand, dp);
+			}
+			catch (Exception exc)
+			{
+				throw new SaveException(exc.Message, InsertCommand, dp, exc);
+			}
 		}
 
 		public void Update(TRecord record)
@@ -106,9 +113,16 @@ namespace Postulate
 
 		protected override void OnUpdate(IDbConnection connection, TRecord record, object parameters = null)
 		{
-			DynamicParameters dp = new DynamicParameters(record); ;
-			if (parameters != null) dp.AddDynamicParams(parameters);
-			connection.Execute(UpdateCommand, dp);
+			DynamicParameters dp = new DynamicParameters(record);
+			try
+			{
+				if (parameters != null) dp.AddDynamicParams(parameters);
+				connection.Execute(UpdateCommand, dp);
+			}
+			catch (Exception exc)
+			{
+				throw new SaveException(exc.Message, UpdateCommand, dp, exc);
+			}
 		}
 
 		public void Delete(TRecord record, object parameters = null)
@@ -254,10 +268,17 @@ namespace Postulate
 					{
 						id = id, version = version,
 						columnName = change.PropertyName,
-						oldValue = change.OldValue ?? "<null>",
-						newValue = change.NewValue ?? "<null>"
+						oldValue = CleanMinDate(change.OldValue) ?? "<null>",
+						newValue = CleanMinDate(change.NewValue) ?? "<null>"
 					});
 			}
+		}
+
+		private static object CleanMinDate(object value)
+		{
+			// prevents DateTime.MinValue from getting passed to SQL Server as a parameter, where it fails
+			if (value is DateTime && value.Equals(default(DateTime))) return null;
+			return value;
 		}
 
 		protected override object OnGetChangesPropertyValue(PropertyInfo propertyInfo, object record, IDbConnection connection)
@@ -266,7 +287,7 @@ namespace Postulate
 
 			ForeignKeyAttribute fk;
 			DereferenceExpression dr;
-			if (propertyInfo.HasAttribute(out fk) && propertyInfo.HasAttribute(out dr))
+			if (result != null && propertyInfo.HasAttribute(out fk) && fk.PrimaryTableType.HasAttribute(out dr))
 			{
 				DbObject obj = DbObject.FromType(fk.PrimaryTableType);
 				result = connection.QueryFirst<string>(

@@ -130,11 +130,16 @@ namespace Postulate.Extensions
 			return false;
 		}
 
+		public static bool HasAttributeWhere<TAttribute>(this ICustomAttributeProvider provider, Func<TAttribute, bool> predicate, out TAttribute attr) where TAttribute : Attribute
+		{
+			if (HasAttribute(provider, out attr)) return predicate.Invoke(attr);
+			return false;
+		}
+
 		public static bool HasAttributeWhere<TAttribute>(this ICustomAttributeProvider provider, Func<TAttribute, bool> predicate) where TAttribute : Attribute
 		{
 			TAttribute attr;
-			if (HasAttribute(provider, out attr)) return predicate.Invoke(attr);
-			return false;
+			return HasAttributeWhere(provider, predicate, out attr);
 		}
 
 		public static bool HasAttribute<TAttribute>(this ICustomAttributeProvider provider) where TAttribute : Attribute
@@ -165,6 +170,27 @@ namespace Postulate.Extensions
 		private static bool InPrimaryKey(PropertyInfo propertyInfo)
 		{
 			return propertyInfo.HasAttribute<PrimaryKeyAttribute>();
+		}
+
+		public static bool AllowAccess(this PropertyInfo pi, Access option)
+		{
+			Type modelType = pi.DeclaringType;
+			if (pi.CanWrite && !pi.Name.Equals(modelType.IdentityColumnName()) && !pi.HasAttribute<CalculatedAttribute>())
+			{
+				ColumnAccessAttribute attr;
+				if (modelType.HasAttributeWhere(a => a.ColumnName.Equals(pi.Name), out attr))
+				{					
+					return attr.Access == option;
+				}
+
+				if (pi.HasAttribute(out attr))
+				{
+					return attr.Access == option;
+				}
+
+				return true;
+			}
+			return false;
 		}
 	}
 }

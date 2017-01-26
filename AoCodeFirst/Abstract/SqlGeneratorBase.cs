@@ -53,7 +53,7 @@ namespace Postulate.Abstract
 		private IEnumerable<PropertyInfo> GetWriteableProperties(Access option)
 		{
 			Type t = typeof(TRecord);
-			return t.GetProperties().Where(p => AllowAccess(p, option));
+			return t.GetProperties().Where(p => p.AllowAccess(option));
 		}
 
 		public string[] SelectableColumns(bool allColumns, bool squareBraces = false)
@@ -116,25 +116,6 @@ namespace Postulate.Abstract
 
 		public abstract string InsertStatement();
 
-		public abstract string DeleteStatement();
-
-		private static bool AllowAccess(PropertyInfo pi, Access option)
-		{
-			if (pi.CanWrite && !pi.Name.Equals(typeof(TRecord).IdentityColumnName()) && !pi.GetCustomAttributes<CalculatedAttribute>().Any())
-			{				
-				var attrs = pi.DeclaringType.GetCustomAttributes<ColumnAccessAttribute>();
-				if (attrs != null)
-				{
-					var classAttr = attrs.SingleOrDefault(a => a.ColumnName.Equals(pi.Name));
-					if (classAttr != null) return classAttr.Access == option;
-				}
-
-				var attr = pi.GetCustomAttribute<ColumnAccessAttribute>() as ColumnAccessAttribute;
-				if (attr != null) return attr.Access == option;
-
-				return true;
-			}
-			return false;
-		}
+		public abstract string DeleteStatement();		
 	}
 }

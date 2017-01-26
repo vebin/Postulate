@@ -75,6 +75,7 @@
     <Compile Include="Models\ChangeHistoryRecord.cs" />
     <Compile Include="Profiler.cs" />
     <Compile Include="ProfilerWrapper.cs" />
+    <Compile Include="SaveException.cs" />
     <Compile Include="SqlServerDb.cs" />
     <Compile Include="SqlServerQuery.cs" />
     <Compile Include="Validation\IValidateable.cs" />

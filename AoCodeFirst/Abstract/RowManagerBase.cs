@@ -22,6 +22,7 @@ namespace Postulate.Abstract
 	{
 		public int RecordsPerPage { get; set; } = 50;
 		public bool CaptureChangesOnSave { get; set; }
+		public string CaptureChangesIgnoreProperties { get; set; }
 
 		public abstract TRecord Find(IDbConnection connection, TKey id);
 		public abstract TRecord FindWhere(IDbConnection connection, string criteria, object parameters);
@@ -214,8 +215,10 @@ namespace Postulate.Abstract
 		{
 			if (record.IsNewRecord()) return null;
 
+			string[] ignoreProps = (CaptureChangesIgnoreProperties ?? string.Empty).Split(',', ';').Select(s => s.Trim()).ToArray();
+
 			TRecord savedRecord = Find(connection, record.Id);
-			return typeof(TRecord).GetProperties().Select(pi =>
+			return typeof(TRecord).GetProperties().Where(pi => pi.AllowAccess(Access.UpdateOnly) && !ignoreProps.Contains(pi.Name)).Select(pi =>
 			{
 				return new PropertyChange()
 				{

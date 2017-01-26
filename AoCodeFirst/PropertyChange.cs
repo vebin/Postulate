@@ -1,4 +1,6 @@
-﻿namespace Postulate
+﻿using System;
+
+namespace Postulate
 {
 	public class PropertyChange
 	{
