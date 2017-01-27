@@ -40,6 +40,10 @@ namespace Postulate.Merge
 		private List<DbObject> _createdTables;
 		private List<DbObject> _deletedTables;
 
+		public IEnumerable<Action> AllActions { get; private set; }
+		public ILookup<Action, string> AllValidationErrors { get; private set; }
+		public ILookup<Action, string> AllCommands { get; private set; }
+
 		public SchemaMerge(Type dbType, string @namespace = null)
 		{			
 			_createdTables = new List<DbObject>();
@@ -78,6 +82,16 @@ namespace Postulate.Merge
 			};
 
 			foreach (var m in methods) actions.AddRange(m.Invoke(_modelTypes, connection));
+
+			AllActions = actions;
+
+			AllValidationErrors = actions.SelectMany(action => action.ValidationErrors()
+				.Select(err => new { Action = action, Message = err }))
+				.ToLookup(item => item.Action, item => item.Message);
+
+			AllCommands = actions.SelectMany(action => action.SqlCommands()
+				.Select(cmd => new { Action = action, Command = cmd }))
+				.ToLookup(item => item.Action, item => item.Command);
 
 			return actions;
 		}
