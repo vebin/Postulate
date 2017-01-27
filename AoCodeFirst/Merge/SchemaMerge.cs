@@ -38,10 +38,13 @@ namespace Postulate.Merge
 		private readonly IEnumerable<Type> _modelTypes;		
 
 		private List<DbObject> _createdTables;
+		private List<DbObject> _deletedTables;
 
 		public SchemaMerge(Type dbType, string @namespace = null)
 		{			
 			_createdTables = new List<DbObject>();
+			_deletedTables = new List<DbObject>();
+
 			_modelTypes = dbType.Assembly.GetTypes()
 				.Where(t =>
 					!t.Name.StartsWith("<>") &&
@@ -161,9 +164,12 @@ namespace Postulate.Merge
 			List<Action> results = new List<Action>();
 
 			var schemaColumns = GetSchemaColumns(connection);
+
 			var modelColumns = GetModelColumns(modelTypes);
+
 			var deletedColumns = schemaColumns.Where(sc => 
 				!modelColumns.Any(mc => mc.Equals(sc)) && // model column does not exist
+				!_deletedTables.Contains(new DbObject(sc.Schema, sc.TableName)) && // table has been deleted
 				modelColumns.Any(mc => mc.Schema.Equals(sc.Schema) && mc.TableName.Equals(sc.TableName)) // but the containing table still does
 				);
 
@@ -183,11 +189,16 @@ namespace Postulate.Merge
 
 			var allTables = connection.Query(
 				@"SELECT SCHEMA_NAME([schema_id]) AS [Schema], [name] AS [TableName], [object_id] AS [ObjectID] 
-				FROM [sys].[tables] WHERE [name] NOT LIKE 'AspNet%' AND [name] NOT LIKE '__MigrationHistory'")
+				FROM [sys].[tables] 
+				WHERE 
+					[name] NOT LIKE 'AspNet%' 
+					AND [name] NOT LIKE '__MigrationHistory' AND 
+					SCHEMA_NAME([schema_id])<>'changes'")
 				.Select(tbl => new DbObject(tbl.Schema, tbl.TableName) { ObjectID = tbl.ObjectID });
 
-			var deletedTables = allTables.Where(obj => !modelTypes.Any(mt => obj.Equals(mt)));						
-										
+			var deletedTables = allTables.Where(obj => !modelTypes.Any(mt => obj.Equals(mt)));
+
+			_deletedTables.AddRange(deletedTables);
 			results.AddRange(deletedTables.Select(del => new DropTable(del, connection)));
 
 			return results;
@@ -248,27 +259,31 @@ namespace Postulate.Merge
 
 			Dictionary<DbObject, Type> dcModelTypes = new Dictionary<DbObject, Type>();
 
-			var modelColumns = modelTypes.SelectMany(mt => mt.GetProperties().Select(pi =>
-			{
-				DbObject obj = DbObject.FromType(mt);
-				if (!dcModelTypes.ContainsKey(obj)) dcModelTypes.Add(obj, mt);
-				return new ColumnRef()
+			var modelColumns = modelTypes.SelectMany(mt => mt.GetProperties()
+				.Where(pi => CreateTable.IsSupportedType(pi.PropertyType))
+				.Select(pi =>
 				{
-					Schema = obj.Schema,
-					TableName = obj.Name,
-					ColumnName = pi.SqlColumnName(),
-					PropertyInfo = pi
-				};
-			}));
+					DbObject obj = DbObject.FromType(mt);
+					if (!dcModelTypes.ContainsKey(obj)) dcModelTypes.Add(obj, mt);
+					return new ColumnRef()
+					{
+						Schema = obj.Schema,
+						TableName = obj.Name,
+						ColumnName = pi.SqlColumnName(),
+						PropertyInfo = pi
+					};
+				}));
 
 			var newColumns = modelColumns.Where(mcol =>
-				!_createdTables.Contains(new DbObject(mcol.Schema, mcol.TableName)) &&
+				!_createdTables.Contains(new DbObject(mcol.Schema, mcol.TableName)) &&				
 				!schemaColumns.Any(scol => mcol.Equals(scol)));
 
 			foreach (var colGroup in newColumns.GroupBy(item => new DbObject(item.Schema, item.TableName)))
 			{
 				if (IsTableEmpty(connection, colGroup.Key.Schema, colGroup.Key.Name) || dcModelTypes[colGroup.Key].HasAttribute<AllowDropAttribute>())
 				{
+					_deletedTables.Add(colGroup.Key);
+					_createdTables.Add(colGroup.Key);
 					colGroup.Key.ObjectID = dcObjectIDs[colGroup.Key];
 					results.Add(new DropTable(colGroup.Key, connection));
 					results.Add(new CreateTable(dcModelTypes[colGroup.Key]));
