@@ -26,7 +26,7 @@ namespace Postulate.Abstract
 		public TRecord Find(IDbConnection connection, TKey id, string userName = null)
 		{
 			var record = OnFind(connection, id);
-			CheckReadPermission(connection, userName, record);
+			EvalReadPermission(connection, userName, record);
 			return record;
 		}
 
@@ -44,7 +44,7 @@ namespace Postulate.Abstract
 			if (record == null) return;
 			if (string.IsNullOrEmpty(userName)) return;
 
-			if (!CheckReadPermission?.Invoke(connection, userName, record) ?? true)
+			if (!(CheckReadPermission?.Invoke(connection, userName, record) ?? true))
 			{
 				throw new UnauthorizedAccessException($"Read permission was denied on the {typeof(TRecord).Name} with Id {record.Id}.");
 			}
@@ -55,7 +55,7 @@ namespace Postulate.Abstract
 			if (record == null) return;
 			if (string.IsNullOrEmpty(userName)) return;
 
-			if (!CheckWritePermission?.Invoke(connection, userName, record) ?? true)
+			if (!(CheckWritePermission?.Invoke(connection, userName, record) ?? true))
 			{
 				throw new UnauthorizedAccessException($"Write permission was denied on the {typeof(TRecord).Name} with Id {record.Id}.");
 			}

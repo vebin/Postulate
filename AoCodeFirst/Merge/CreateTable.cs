@@ -20,6 +20,33 @@ namespace Postulate.Merge
 			_modelType = modelType;
 		}
 
+		public static Dictionary<Type, string> SupportedTypes(string length = null, byte precision = 0, byte scale = 0)
+		{
+			return new Dictionary<Type, string>()
+			{
+				{ typeof(string), $"nvarchar({length})" },
+				{ typeof(bool), "bit" },
+				{ typeof(int), "int" },
+				{ typeof(decimal), $"decimal({precision}, {scale})" },
+				{ typeof(double), "float" },
+				{ typeof(float), "float" },
+				{ typeof(long), "bigint" },
+				{ typeof(short), "smallint" },
+				{ typeof(byte), "tinyint" },
+				{ typeof(Guid), "uniqueidentifier" },
+				{ typeof(DateTime), "datetime" },
+				{ typeof(TimeSpan), "time" },
+				{ typeof(char), "nchar(1)" }
+			};
+		}
+
+		public static bool IsSupportedType(Type type)
+		{
+			return 
+				SupportedTypes().ContainsKey(type) ||
+				(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>) && IsSupportedType(type.GetGenericArguments()[0]));
+		}
+
 		public override IEnumerable<string> SqlCommands()
 		{
 			yield return

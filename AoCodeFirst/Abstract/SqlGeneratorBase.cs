@@ -64,7 +64,11 @@ namespace Postulate.Abstract
 			string identityCol = (t.HasAttribute(out idAttr)) ? idAttr.ColumnName : SqlDb.IdentityColumnName;
 			bool useAltIdentity = (!identityCol.Equals(SqlDb.IdentityColumnName));
 
-			var props = t.GetProperties().Where(p => p.CanRead && !IsSupressedIdentity(useAltIdentity, p.SqlColumnName()));
+			var props = t.GetProperties().Where(p => 
+				p.CanRead && 
+				CreateTable.IsSupportedType(p.PropertyType) &&
+				!IsSupressedIdentity(useAltIdentity, p.SqlColumnName()));
+
 			var results = (allColumns) ?
 				props.Select(p => p.SqlColumnName()) :
 				props.Where(p => !p.HasAttribute<LargeValueColumn>()).Select(p => p.SqlColumnName());

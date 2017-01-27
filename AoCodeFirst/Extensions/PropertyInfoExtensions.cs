@@ -21,7 +21,7 @@ namespace Postulate.Extensions
 			if (attr != null && !string.IsNullOrEmpty(attr.Name)) result = attr.Name;
 
 			return result;
-		}
+		}		
 
 		public static string SqlColumnType(this PropertyInfo propertyInfo)
 		{
@@ -42,22 +42,7 @@ namespace Postulate.Extensions
 				scale = dec.Scale;
 			}
 
-			var typeMap = new Dictionary<Type, string>()
-			{
-				{ typeof(string), $"nvarchar({length})" },
-				{ typeof(bool), "bit" },
-				{ typeof(int), "int" },
-				{ typeof(decimal), $"decimal({precision}, {scale})" },
-				{ typeof(double), "float" },
-				{ typeof(float), "float" },
-				{ typeof(long), "bigint" },
-				{ typeof(short), "smallint" },
-				{ typeof(byte), "tinyint" },
-				{ typeof(Guid), "uniqueidentifier" },
-				{ typeof(DateTime), "datetime" },
-				{ typeof(TimeSpan), "time" },
-				{ typeof(char), "nchar(1)" }
-			};
+			var typeMap = CreateTable.SupportedTypes(length, precision, scale);
 
 			Type t = propertyInfo.PropertyType;
 			if (t.IsGenericType) t = t.GenericTypeArguments[0];
