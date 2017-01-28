@@ -4,6 +4,7 @@ using Postulate.Enums;
 using Postulate.Extensions;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -74,10 +75,10 @@ namespace Postulate.Merge
 		{
 			List<string> results = new List<string>();
 
-			results.AddRange(_modelType.GetProperties().Where(pi => pi.HasAttribute<ForeignKeyAttribute>())
+			results.AddRange(_modelType.GetProperties().Where(pi => pi.HasAttribute<Attributes.ForeignKeyAttribute>())
 				.Select(pi =>
 				{
-					var fk = pi.GetCustomAttribute<ForeignKeyAttribute>();
+					var fk = pi.GetCustomAttribute<Attributes.ForeignKeyAttribute>();
 					return
 						$@"CONSTRAINT [{pi.ForeignKeyName()}] FOREIGN KEY (
 							[{pi.SqlColumnName()}]
@@ -86,7 +87,7 @@ namespace Postulate.Merge
 						)";
 				}));
 
-			results.AddRange(_modelType.GetCustomAttributes<ForeignKeyAttribute>()
+			results.AddRange(_modelType.GetCustomAttributes<Attributes.ForeignKeyAttribute>()
 				.Where(attr => HasColumnName(_modelType, attr.ColumnName))
 				.Select(fk =>
 				{
@@ -164,7 +165,10 @@ namespace Postulate.Merge
 			if (identityPos == Position.StartOfTable) results.Add(IdentityColumnSql());
 
 			results.AddRange(_modelType.GetProperties()
-				.Where(p => p.CanWrite && !p.Name.ToLower().Equals(nameof(DataRecord<int>.Id).ToLower()))
+				.Where(p => 
+					p.CanWrite && 
+					!p.Name.ToLower().Equals(nameof(DataRecord<int>.Id).ToLower()) &&
+					!p.HasAttribute<NotMappedAttribute>())
 				.Select(pi => 
 					{
 						CalculatedAttribute calc;
