@@ -53,7 +53,7 @@ namespace Postulate.Abstract
 		private IEnumerable<PropertyInfo> GetWriteableProperties(Access option)
 		{
 			Type t = typeof(TRecord);
-			return t.GetProperties().Where(p => p.AllowAccess(option));
+			return t.GetProperties().Where(p => p.AllowAccess(option) && !p.HasAttribute<NotMappedAttribute>());
 		}
 
 		public string[] SelectableColumns(bool allColumns, bool squareBraces = false)
