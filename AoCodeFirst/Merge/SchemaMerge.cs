@@ -229,7 +229,8 @@ namespace Postulate.Merge
 								 join mc in modelColumns on sc equals mc
 								 where 
 									!sc.DataTypeSyntax().ToLower().Equals(mc.PropertyInfo.SqlColumnType().ToLower()) &&
-									!_createdTables.Contains(new DbObject(mc.Schema, mc.TableName))
+									!_createdTables.Contains(new DbObject(mc.Schema, mc.TableName)) &&
+									!mc.PropertyInfo.HasAttribute<CalculatedAttribute>()
 								 select new { ModelColumn = mc, SchemaColumn = sc };
 
 			results.AddRange(retypedColumns.Select(col => new RetypeColumn(col.SchemaColumn, col.ModelColumn)));
