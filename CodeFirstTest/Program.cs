@@ -1,7 +1,9 @@
 ﻿using CodeFirstTest.Models;
+using Ginseng.Models;
 using Postulate.Merge;
 using System;
 using System.Data.SqlClient;
+using System.Linq;
 
 namespace CodeFirstTest
 {
@@ -9,31 +11,19 @@ namespace CodeFirstTest
 	{
 		static void Main(string[] args)
 		{
-			/*Organization org = Organization.Db().Find(1);
-			org.BillingRate = 30;
-			org.Description = "This better be a good description";
-			Organization.Db().Update(org, new { userName = "adamo" }, o => o.BillingRate, o => o.Description);*/
+			Project p = Project.Db().Find(1);
+			var changes = Project.Db().QueryChangeHistory(p.Id, -5).Take(5);
 
-			PostulateDb db = new PostulateDb();
-			SchemaMerge merge = new SchemaMerge(typeof(PostulateDb));
-			using (SqlConnection cn = db.GetConnection() as SqlConnection)
+			foreach (var c in changes)
 			{
-				cn.Open();
-				
-				foreach (var a in merge.Analyze(cn))
+				Console.WriteLine($"{c.DateTime} - version {c.Version}:");
+				foreach (var prop in c.Properties)
 				{
-					Console.WriteLine(a.ToString());
-					foreach (var cmd in a.SqlCommands())
-					{
-						Console.WriteLine(cmd);
-						Console.WriteLine();
-					}
+					Console.WriteLine($"\t{prop.PropertyName}: {prop.OldValue} -> {prop.NewValue}");
 				}
-
 				Console.WriteLine();
-				Console.WriteLine("Executing...");
-				merge.Execute(cn);
 			}
+
 			Console.ReadLine();
 		}
 	}

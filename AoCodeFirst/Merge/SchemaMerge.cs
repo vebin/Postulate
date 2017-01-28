@@ -194,7 +194,7 @@ namespace Postulate.Merge
 
 		private IEnumerable<ColumnRef> GetModelColumns(IEnumerable<Type> types)
 		{
-			return types.SelectMany(t => t.GetProperties().Select(pi => new ColumnRef(pi)));
+			return types.SelectMany(t => t.GetProperties().Where(pi => !pi.HasAttribute<NotMappedAttribute>()).Select(pi => new ColumnRef(pi)));
 		}
 
 		private IEnumerable<Action> GetDeletedTables(IEnumerable<Type> modelTypes, IDbConnection connection)
@@ -277,7 +277,7 @@ namespace Postulate.Merge
 			Dictionary<DbObject, Type> dcModelTypes = new Dictionary<DbObject, Type>();
 
 			var modelColumns = modelTypes.SelectMany(mt => mt.GetProperties()
-				.Where(pi => CreateTable.IsSupportedType(pi.PropertyType))
+				.Where(pi => CreateTable.IsSupportedType(pi.PropertyType) && !pi.HasAttribute<NotMappedAttribute>())
 				.Select(pi =>
 				{
 					DbObject obj = DbObject.FromType(mt);

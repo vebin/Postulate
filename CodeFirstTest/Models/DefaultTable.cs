@@ -14,6 +14,7 @@ namespace CodeFirstTest.Models
 	{		
 		[ColumnAccess(Access.InsertOnly)]
 		[InsertExpression("dbo.LocalDateTime(@userName)")]	
+		[Required]
 		public DateTime DateCreated { get; set; }
 
 		[MaxLength(20)]		

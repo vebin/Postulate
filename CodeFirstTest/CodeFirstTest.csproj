@@ -53,6 +53,7 @@
     <Compile Include="Models\Customer.cs" />
     <Compile Include="Models\Item.cs" />
     <Compile Include="Models\LogEntry.cs" />
+    <Compile Include="Models\OrgQuery.cs" />
     <Compile Include="Models\PostulateDb.cs" />
     <Compile Include="Models\Organization.cs" />
     <Compile Include="Program.cs" />
@@ -63,6 +64,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Ginseng3\GinsengModels\GinsengModels.csproj">
+      <Project>{A7409FF4-57E8-4217-A88B-4B8636EB42A8}</Project>
+      <Name>GinsengModels</Name>
+    </ProjectReference>
     <ProjectReference Include="..\AoCodeFirst\AoCodeFirst.csproj">
       <Project>{2b7e1b3d-bf17-4207-8fde-909474c088f0}</Project>
       <Name>AoCodeFirst</Name>

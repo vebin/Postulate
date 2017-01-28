@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AoCodeFirst", "AoCodeFirst\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeFirstTest", "CodeFirstTest\CodeFirstTest.csproj", "{5109E786-F85B-4DCB-A1B0-89938FCC328F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GinsengModels", "..\Ginseng3\GinsengModels\GinsengModels.csproj", "{A7409FF4-57E8-4217-A88B-4B8636EB42A8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{5109E786-F85B-4DCB-A1B0-89938FCC328F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5109E786-F85B-4DCB-A1B0-89938FCC328F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5109E786-F85B-4DCB-A1B0-89938FCC328F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7409FF4-57E8-4217-A88B-4B8636EB42A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7409FF4-57E8-4217-A88B-4B8636EB42A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7409FF4-57E8-4217-A88B-4B8636EB42A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7409FF4-57E8-4217-A88B-4B8636EB42A8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
