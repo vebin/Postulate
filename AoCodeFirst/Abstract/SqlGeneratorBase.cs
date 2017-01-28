@@ -67,6 +67,7 @@ namespace Postulate.Abstract
 			var props = t.GetProperties().Where(p => 
 				p.CanRead && 
 				CreateTable.IsSupportedType(p.PropertyType) &&
+				!p.HasAttribute<NotMappedAttribute>() &&
 				!IsSupressedIdentity(useAltIdentity, p.SqlColumnName()));
 
 			var results = (allColumns) ?
