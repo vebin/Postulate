@@ -155,8 +155,11 @@ namespace Postulate.Merge
 				DbObject obj = DbObject.FromType(type);
 				if (!connection.Exists("[sys].[tables] WHERE SCHEMA_NAME([schema_id])=@schema AND [name]=@name", new { schema = obj.Schema, name = obj.Name }))
 				{
-					_createdTables.Add(obj);
-					actions.Add(new CreateTable(type));
+					if (!_createdTables.Contains(obj))
+					{
+						_createdTables.Add(obj);
+						actions.Add(new CreateTable(type));
+					}
 				}
 			}
 
@@ -210,7 +213,9 @@ namespace Postulate.Merge
 					SCHEMA_NAME([schema_id])<>'changes'")
 				.Select(tbl => new DbObject(tbl.Schema, tbl.TableName) { ObjectID = tbl.ObjectID });
 
-			var deletedTables = allTables.Where(obj => !modelTypes.Any(mt => obj.Equals(mt)));
+			var deletedTables = allTables.Where(obj => 
+				!modelTypes.Any(mt => obj.Equals(mt)) &&
+				!_deletedTables.Contains(obj));
 
 			_deletedTables.AddRange(deletedTables);
 			results.AddRange(deletedTables.Select(del => new DropTable(del, connection)));
@@ -258,8 +263,11 @@ namespace Postulate.Merge
 			var newPKs = modelPKcols.Where(mpk => !schemaPKcols.Any(spk => mpk.Equals(spk)));
 			foreach (var pk in newPKs)
 			{
-				results.Add(new DropTable(new DbObject(pk.Schema, pk.TableName) { ObjectID = pk.ObjectId }, connection));
-				results.Add(new CreateTable(pk.ModelType));
+				if (!_createdTables.Contains(new DbObject(pk.Schema, pk.TableName)))
+				{
+					results.Add(new DropTable(new DbObject(pk.Schema, pk.TableName) { ObjectID = pk.ObjectId }, connection));
+					results.Add(new CreateTable(pk.ModelType));
+				}
 			}
 
 			return results;
@@ -299,11 +307,14 @@ namespace Postulate.Merge
 			{
 				if (IsTableEmpty(connection, colGroup.Key.Schema, colGroup.Key.Name) || dcModelTypes[colGroup.Key].HasAttribute<AllowDropAttribute>())
 				{
-					_deletedTables.Add(colGroup.Key);
-					_createdTables.Add(colGroup.Key);
-					colGroup.Key.ObjectID = dcObjectIDs[colGroup.Key];
-					results.Add(new DropTable(colGroup.Key, connection));
-					results.Add(new CreateTable(dcModelTypes[colGroup.Key]));
+					if (!_deletedTables.Contains(colGroup.Key) && !_createdTables.Contains(colGroup.Key))
+					{
+						_deletedTables.Add(colGroup.Key);
+						_createdTables.Add(colGroup.Key);
+						colGroup.Key.ObjectID = dcObjectIDs[colGroup.Key];
+						results.Add(new DropTable(colGroup.Key, connection));
+						results.Add(new CreateTable(dcModelTypes[colGroup.Key]));
+					}
 				}
 				else
 				{

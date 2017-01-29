@@ -11,17 +11,13 @@ namespace CodeFirstTest
 	{
 		static void Main(string[] args)
 		{
-			Project p = Project.Db().Find(1);
-			var changes = Project.Db().QueryChangeHistory(p.Id, -5).Take(5);
+			GinsengDb db = new GinsengDb();
 
-			foreach (var c in changes)
+			SchemaMerge sm = new SchemaMerge(typeof(GinsengDb));
+			using (SqlConnection cn = db.GetConnection() as SqlConnection)
 			{
-				Console.WriteLine($"{c.DateTime} - version {c.Version}:");
-				foreach (var prop in c.Properties)
-				{
-					Console.WriteLine($"\t{prop.PropertyName}: {prop.OldValue} -> {prop.NewValue}");
-				}
-				Console.WriteLine();
+				cn.Open();
+				var changes = sm.Analyze(cn);
 			}
 
 			Console.ReadLine();
