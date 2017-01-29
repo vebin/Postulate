@@ -34,6 +34,11 @@ namespace Postulate.Abstract
 			return connection.Query<TResult>(query, dp);
 		}
 
+		public TResult ExecuteSingle(IDbConnection connection, object parameters)
+		{
+			return connection.QuerySingle<TResult>(_sql, parameters);
+		}
+
 		protected void BuildQuery(object parameters, object criteria, out string query, out DynamicParameters dp)
 		{
 			dp = new DynamicParameters(parameters);
