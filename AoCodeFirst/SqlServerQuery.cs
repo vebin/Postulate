@@ -20,6 +20,15 @@ namespace Postulate
 			}
 		}
 
+		public TResult ExecuteSingle(object parameters)
+		{
+			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
+			{
+				cn.Open();
+				return ExecuteSingle(parameters);
+			}
+		}
+
 		public IEnumerable<TResult> Execute(object parameters, string orderBy, int pageSize, int page = 0, object criteria = null)
 		{
 			DynamicParameters dp;
