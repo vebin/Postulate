@@ -23,10 +23,17 @@ namespace Postulate.Abstract
 	{
 		public int RecordsPerPage { get; set; } = 50;
 
+		private Dictionary<TKey, TRecord> _cache = new Dictionary<TKey, TRecord>();
+
 		public TRecord Find(IDbConnection connection, TKey id, string userName = null)
 		{
+			if (_cache.ContainsKey(id)) return _cache[id];
+
 			var record = OnFind(connection, id);
 			EvalReadPermission(connection, userName, record);
+
+			_cache.Add(id, record);
+
 			return record;
 		}
 
