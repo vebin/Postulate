@@ -45,6 +45,7 @@ namespace Postulate.Merge
 		{
 			return 
 				SupportedTypes().ContainsKey(type) ||
+				(type.IsEnum && type.GetEnumUnderlyingType().Equals(typeof(int))) ||
 				(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>) && IsSupportedType(type.GetGenericArguments()[0]));
 		}
 
