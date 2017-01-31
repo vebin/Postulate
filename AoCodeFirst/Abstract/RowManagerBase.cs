@@ -46,6 +46,12 @@ namespace Postulate.Abstract
 			return record;
 		}
 
+		public bool ExistsWhere(IDbConnection connection, string criteria, object parameters, string userName = null)
+		{
+			var record = FindWhere(connection, criteria, parameters, userName);
+			return (record != null);
+		}
+
 		private void EvalReadPermission(IDbConnection connection, string userName, TRecord record)
 		{
 			if (record == null) return;

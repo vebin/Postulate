@@ -25,7 +25,7 @@ namespace Postulate
 			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
 			{
 				cn.Open();
-				return ExecuteSingle(parameters);
+				return ExecuteSingle(cn, parameters);
 			}
 		}
 
