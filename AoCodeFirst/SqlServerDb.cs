@@ -84,6 +84,15 @@ namespace Postulate
 			return results;
 		}
 
+		public T QueryFirst<T>(string query, object parameters)
+		{
+			using (SqlConnection cn = GetConnection() as SqlConnection)
+			{
+				cn.Open();
+				return cn.QueryFirst<T>(query, parameters);
+			}				 
+		}
+
 		public void QueryMultiple(string queries, object parameters, Action<GridReader> action, CommandType commandType = CommandType.StoredProcedure)
 		{
 			CommandDefinition cmdDef = new CommandDefinition(queries, parameters);

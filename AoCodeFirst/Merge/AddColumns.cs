@@ -34,8 +34,9 @@ namespace Postulate.Merge
 		public override IEnumerable<string> SqlCommands()
 		{
 			var obj = DbObject.FromType(_modelType, _connection);
+			var temp = obj.GetTemp();
 			string sourceTableName = obj.ToString();
-			string tempTableName = $"[{obj.Schema}].[{obj.Name}_temp]";
+			string tempTableName = temp.ToString();
 			
 			yield return SelectInto(obj, tempTableName);
 
@@ -45,39 +46,11 @@ namespace Postulate.Merge
 			CreateTable create = new CreateTable(_modelType);
 			foreach (var cmd in create.SqlCommands()) yield return cmd;
 
-			foreach (var cmd in InsertInto(tempTableName, sourceTableName, 
+			RestoreTempTable rt = new RestoreTempTable(temp, _modelType, _connection,
 				_columns.Where(cr => !cr.PropertyInfo.HasAttribute<CalculatedAttribute>()).ToDictionary(
 					item => item.PropertyInfo.SqlColumnName(),
-					item => item.PropertyInfo.SqlDefaultExpression(forCreateTable:false)))) yield return cmd;
-			
-			yield return $"DROP TABLE {tempTableName}";
-		}
-
-		private IEnumerable<string> InsertInto(string sourceTable, string targetTable, Dictionary<string, string> addColumns)
-		{
-			yield return $"SET IDENTITY_INSERT {targetTable} ON";
-
-			var insertColumns = ModelColumnNames()
-				.WhereNotIn(addColumns.Select(kp => kp.Key))
-				.Select(col => $"[{col}]")
-				.Concat(addColumns.Select(kp => $"[{kp.Key}]"));
-
-			var selectColumns = ModelColumnNames()
-				.WhereNotIn(addColumns.Select(kp => kp.Key))
-				.Select(col => $"[{col}]")
-				.Concat(addColumns.Select(kp => kp.Value));
-
-			yield return $"INSERT INTO {targetTable} (\r\n\t" +
-				$"{string.Join(", ", insertColumns)}\r\n" +
-				$") SELECT {string.Join(", ", selectColumns)}\r\n" +
-				$"FROM {sourceTable}";
-
-			yield return $"SET IDENTITY_INSERT {targetTable} OFF";
-		}
-
-		private IEnumerable<string> ModelColumnNames()
-		{			
-			return _modelType.GetProperties().Where(pi => !pi.HasAttribute<CalculatedAttribute>()).Select(pi => pi.SqlColumnName());
+					item => item.PropertyInfo.SqlDefaultExpression(forCreateTable: false)));
+			foreach (var cmd in rt.SqlCommands()) yield return cmd;
 		}
 
 		private string SelectInto(DbObject sourceObject, string intoTable)

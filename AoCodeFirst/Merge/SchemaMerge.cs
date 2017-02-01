@@ -5,13 +5,13 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using Dapper;
 using System.ComponentModel.DataAnnotations;
 using static Postulate.Merge.AddColumns;
 using Postulate.Attributes;
 using System.ComponentModel.DataAnnotations.Schema;
+using static Postulate.Merge.RestoreTempTable;
 
 namespace Postulate.Merge
 {
@@ -28,7 +28,8 @@ namespace Postulate.Merge
 		Create,
 		Rename,
 		Retype,
-		Delete
+		Delete,
+		Load
 	}
 
 	internal delegate IEnumerable<SchemaMerge.Action> GetSchemaMergeActionHandler(IEnumerable<Type> modelTypes, IDbConnection connection);
@@ -71,12 +72,11 @@ namespace Postulate.Merge
 		public IEnumerable<Action> Analyze(IDbConnection connection)
 		{
 			var actions = new List<Action>();
-			_createdTables = new List<DbObject>();
 
 			GetSchemaMergeActionHandler[] methods = new GetSchemaMergeActionHandler[]
 			{
-				GetDeletedTables, GetNewTables, GetNewColumns, GetRetypedColumns,
-				GetDeletedColumns, GetRekeyedTables/*
+				GetRestorableTempTables, GetDeletedTables, GetNewTables, GetNewColumns,
+				GetRetypedColumns, GetDeletedColumns, GetRekeyedTables/*
 				GetRenamedTables, GetRenamedColumns, 
 				GetNewPrimaryKeys, GetDeletedPrimaryKeys*/
 			};
@@ -94,6 +94,27 @@ namespace Postulate.Merge
 				.ToLookup(item => item.Action, item => item.Command);
 
 			return actions;
+		}
+		
+		private IEnumerable<Action> GetRestorableTempTables(IEnumerable<Type> modelTypes, IDbConnection connection)
+		{
+			List<Action> results = new List<Action>();
+
+			var tempTables = connection.Query<TempTableRef>(
+				@"SELECT 
+					SCHEMA_NAME([schema_id]) AS [Schema], [name] AS [TempName], 
+					SUBSTRING([name], 0, LEN([name]) - LEN('_temp') + 1) AS [ModelName],
+					[object_id] AS [TempObjectId]
+				FROM 
+					[sys].[tables] WHERE [name] LIKE '%_temp'");
+
+			var restoreTables = from tt in tempTables
+								join mt in modelTypes on new DbObject(tt.Schema, tt.ModelName) equals DbObject.FromType(mt)
+								select new { TempObject = new DbObject(tt.Schema, tt.TempName) { ObjectID = tt.TempObjectId }, ModelType = mt };
+
+			results.AddRange(restoreTables.Select(rt => new RestoreTempTable(rt.TempObject, rt.ModelType, connection)));
+
+			return results;
 		}
 
 		public void Execute(IDbConnection connection)
@@ -186,7 +207,7 @@ namespace Postulate.Merge
 
 			var deletedColumns = schemaColumns.Where(sc => 
 				!modelColumns.Any(mc => mc.Equals(sc)) && // model column does not exist
-				!_deletedTables.Contains(new DbObject(sc.Schema, sc.TableName)) && // table has been deleted
+				!_deletedTables.Contains(new DbObject(sc.Schema, sc.TableName)) && // table has not already been deleted
 				modelColumns.Any(mc => mc.Schema.Equals(sc.Schema) && mc.TableName.Equals(sc.TableName)) // but the containing table still does
 				);
 
@@ -305,16 +326,14 @@ namespace Postulate.Merge
 
 			foreach (var colGroup in newColumns.GroupBy(item => new DbObject(item.Schema, item.TableName)))
 			{
+				if (!_deletedTables.Contains(colGroup.Key)) _deletedTables.Add(colGroup.Key);
+				if (!_createdTables.Contains(colGroup.Key)) _createdTables.Add(colGroup.Key);
+				
 				if (IsTableEmpty(connection, colGroup.Key.Schema, colGroup.Key.Name) || dcModelTypes[colGroup.Key].HasAttribute<AllowDropAttribute>())
 				{
-					if (!_deletedTables.Contains(colGroup.Key) && !_createdTables.Contains(colGroup.Key))
-					{
-						_deletedTables.Add(colGroup.Key);
-						_createdTables.Add(colGroup.Key);
-						colGroup.Key.ObjectID = dcObjectIDs[colGroup.Key];
-						results.Add(new DropTable(colGroup.Key, connection));
-						results.Add(new CreateTable(dcModelTypes[colGroup.Key]));
-					}
+					colGroup.Key.ObjectID = dcObjectIDs[colGroup.Key];
+					results.Add(new DropTable(colGroup.Key, connection));
+					results.Add(new CreateTable(dcModelTypes[colGroup.Key]));
 				}
 				else
 				{

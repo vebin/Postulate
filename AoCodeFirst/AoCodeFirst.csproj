@@ -69,6 +69,7 @@
     <Compile Include="Merge\DropColumn.cs" />
     <Compile Include="Merge\DropTable.cs" />
     <Compile Include="Merge\PrimaryKeyRef.cs" />
+    <Compile Include="Merge\RestoreTempTable.cs" />
     <Compile Include="Merge\RetypeColumn.cs" />
     <Compile Include="Merge\SchemaMerge.cs" />
     <Compile Include="Extensions\PropertyInfoExtensions.cs" />

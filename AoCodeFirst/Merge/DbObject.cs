@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Reflection;
 using System.Data;
 using Dapper;
@@ -16,11 +12,17 @@ namespace Postulate.Merge
 		private readonly string _schema;
 		private readonly string _name;
 
+		private const string _tempSuffix = "_temp";
+
 		public DbObject(string schema, string name)
 		{
 			_schema = schema;
 			_name = name;
 			SquareBraces = true;
+		}
+
+		public DbObject()
+		{
 		}
 
 		public string Schema { get { return _schema; } }
@@ -39,6 +41,16 @@ namespace Postulate.Merge
 			return (SquareBraces) ? $"[{Schema}].[{Name}]" : $"{Schema}.{Name}";
 		}
 
+		public DbObject GetTemp()
+		{
+			return new DbObject(Schema, Name + _tempSuffix);
+		}
+
+		public static DbObject FromTempName(DbObject obj)
+		{
+			return new DbObject(obj.Schema, obj.Name.Substring(0, obj.Name.IndexOf(_tempSuffix)));
+		}
+
 		public override bool Equals(object obj)
 		{
 			DbObject test = obj as DbObject;
@@ -48,7 +60,7 @@ namespace Postulate.Merge
 			}
 
 			Type testType = obj as Type;
-			if (testType != null) return Equals(DbObject.FromType(testType));
+			if (testType != null) return Equals(FromType(testType));
 
 			return false;
 		}
