@@ -15,7 +15,8 @@ using Postulate.Models;
 namespace Postulate.Abstract
 {
 	public delegate void SavingRecordHandler<TRecord>(IDbConnection connection, SaveAction action, TRecord record);
-	public delegate void RecordSavedHandler<TRecord>(IDbConnection connection, SaveAction action, TRecord record);	
+	public delegate void RecordSavedHandler<TRecord>(IDbConnection connection, SaveAction action, TRecord record);
+	public delegate void RecordDeletedHandler<TRecord>(IDbConnection connection, TRecord record, string userName);
 	public delegate bool CheckReadPermissionHandler<TRecord>(IDbConnection connection, string userName, TRecord record);
 	public delegate bool CheckWritePermissionHandler<TRecord>(IDbConnection connection, string userName, TRecord record);
 
@@ -106,6 +107,7 @@ namespace Postulate.Abstract
 		{
 			EvalWritePermission(connection, userName, record);
 			OnDelete(connection, record, parameters);
+			RecordDeleted?.Invoke(connection, record, userName);
 		}
 
 		protected abstract void OnDelete(IDbConnection connection, TRecord record, object parameters = null);
@@ -141,6 +143,7 @@ namespace Postulate.Abstract
 		public CheckWritePermissionHandler<TRecord> CheckWritePermission { get; set; }
 		public SavingRecordHandler<TRecord> SavingRecord { get; set; }
 		public RecordSavedHandler<TRecord> RecordSaved { get; set; }
+		public RecordDeletedHandler<TRecord> RecordDeleted { get; set; }
 
 		public string DefaultQuery { get; set; }
 		public string FindCommand { get; set; }		
