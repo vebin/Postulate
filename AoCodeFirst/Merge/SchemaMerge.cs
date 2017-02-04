@@ -237,9 +237,9 @@ namespace Postulate.Merge
 			var deletedTables = allTables.Where(obj => 
 				!modelTypes.Any(mt => obj.Equals(mt)) &&
 				!_deletedTables.Contains(obj));
-
-			_deletedTables.AddRange(deletedTables);
+			
 			results.AddRange(deletedTables.Select(del => new DropTable(del, connection)));
+			_deletedTables.AddRange(deletedTables);
 
 			return results;
 		}
