@@ -112,7 +112,7 @@ namespace Postulate.Merge
 		{
 			List<string> results = new List<string>();
 
-			if (PrimaryKeyColumns().Any())
+			if (PrimaryKeyColumns(markedOnly:true).Any())
 			{
 				results.Add($"CONSTRAINT [U_{DbObject.ConstraintName(_modelType)}_Id] UNIQUE ([Id])");
 			}
@@ -135,16 +135,16 @@ namespace Postulate.Merge
 			return results;
 		}
 
-		protected IEnumerable<string> PrimaryKeyColumns()
+		protected IEnumerable<string> PrimaryKeyColumns(bool markedOnly = false)
 		{
-			return PrimaryKeyColumns(_modelType);
+			return PrimaryKeyColumns(_modelType, markedOnly);
 		}
 
-		public static IEnumerable<string> PrimaryKeyColumns(Type modelType)
+		public static IEnumerable<string> PrimaryKeyColumns(Type modelType, bool markedOnly = false)
 		{
 			var pkColumns = modelType.GetProperties().Where(pi => pi.HasAttribute<PrimaryKeyAttribute>()).Select(pi => pi.SqlColumnName());
 
-			if (pkColumns.Any()) return pkColumns;
+			if (pkColumns.Any() || markedOnly) return pkColumns;
 
 			return new string[] { modelType.IdentityColumnName() };
 		}
