@@ -229,7 +229,7 @@ namespace Postulate.Abstract
 			else
 			{
 				string ignoreProps;
-				if (HasChangeTracking(out ignoreProps)) CaptureChanges(connection, record, ignoreProps);
+				if (HasChangeTracking(out ignoreProps)) CaptureChanges(connection, record, ignoreProps, userName);
 				Update(connection, record, parameters, userName);
 			}
 
@@ -324,15 +324,15 @@ namespace Postulate.Abstract
 			return propertyInfo.GetValue(record);
 		}
 
-		public void CaptureChanges(IDbConnection connection, TRecord record, string ignoreProps = null)
+		public void CaptureChanges(IDbConnection connection, TRecord record, string ignoreProps = null, string userName = null)
 		{
 			var changes = GetChanges(connection, record, ignoreProps);
-			if (changes != null && changes.Any()) OnCaptureChanges(connection, record.Id, changes);			
+			if (changes != null && changes.Any()) OnCaptureChanges(connection, record.Id, changes, userName);
 		}
 
 		public abstract IEnumerable<ChangeHistory<TKey>> QueryChangeHistory(IDbConnection connection, TKey id, int timeZoneOffset = 0);		
 
-		protected abstract void OnCaptureChanges(IDbConnection connection, TKey id, IEnumerable<PropertyChange> changes);
+		protected abstract void OnCaptureChanges(IDbConnection connection, TKey id, IEnumerable<PropertyChange> changes, string userName = null);
 
 		private bool RequiredDateNotSet(PropertyInfo prop, TRecord record)
 		{

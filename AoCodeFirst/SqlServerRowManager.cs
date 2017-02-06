@@ -213,7 +213,7 @@ namespace Postulate
 			}
 		}
 
-		protected override void OnCaptureChanges(IDbConnection connection, TKey id, IEnumerable<PropertyChange> changes)
+		protected override void OnCaptureChanges(IDbConnection connection, TKey id, IEnumerable<PropertyChange> changes, string userName = null)
 		{
 			SqlConnection cn = connection as SqlConnection;
 			
@@ -242,7 +242,8 @@ namespace Postulate
 			{
 				cn.Execute($@"CREATE TABLE [{_changesSchema}].[{tableName}] (
 					[RecordId] {typeMap[typeof(TKey)]} NOT NULL,
-					[Version] int NOT NULL,	
+					[Version] int NOT NULL,
+					[UserName] nvarchar(256) NOT NULL,
 					[ColumnName] nvarchar(100) NOT NULL,
 					[OldValue] nvarchar(max) NULL,
 					[NewValue] nvarchar(max) NULL,
@@ -262,12 +263,13 @@ namespace Postulate
 			foreach (var change in changes)
 			{
 				cn.Execute(
-					$@"INSERT INTO [{_changesSchema}].[{tableName}] ([RecordId], [Version], [ColumnName], [OldValue], [NewValue])
-					VALUES (@id, @version, @columnName, @oldValue, @newValue)",
+					$@"INSERT INTO [{_changesSchema}].[{tableName}] ([RecordId], [Version], [UserName], [ColumnName], [OldValue], [NewValue])
+					VALUES (@id, @version, @userName, @columnName, @oldValue, @newValue)",
 					new
 					{
 						id = id, version = version,
 						columnName = change.PropertyName,
+						userName = userName ?? "<unknown>",
 						oldValue = CleanMinDate(change.OldValue) ?? "<null>",
 						newValue = CleanMinDate(change.NewValue) ?? "<null>"
 					});
