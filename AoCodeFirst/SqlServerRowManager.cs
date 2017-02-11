@@ -50,6 +50,15 @@ namespace Postulate
 			return connection.QueryFirstOrDefault<TRecord>(FindCommand, new { id = id });
 		}
 
+		public bool ExistsWhere(string criteria, object parameters, string userName = null)
+		{
+			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
+			{
+				cn.Open();
+				return ExistsWhere(cn, criteria, parameters, userName);
+			}
+		}
+
 		public TRecord FindWhere(string criteria, object parameters)
 		{
 			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
