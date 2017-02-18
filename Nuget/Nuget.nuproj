@@ -19,11 +19,11 @@
   <Import Project="$(NuProjPath)\NuProj.props" Condition="Exists('$(NuProjPath)\NuProj.props')" />
   <PropertyGroup Label="Configuration">
     <Id>PostulateORM</Id>
-    <Version>0.8.3</Version>
+    <Version>0.8.4</Version>
     <Title>Postulate ORM</Title>
     <Authors>Adam O'Neil</Authors>
     <Owners>Adam O'Neil</Owners>
-    <Summary>Nuget</Summary>
+    <Summary>Postulate is a code-first ORM targeted to SQL Server that uses Dapper.</Summary>
     <Description>Postulate is a code-first ORM targeted to SQL Server that uses Dapper.</Description>
     <ReleaseNotes>
     </ReleaseNotes>

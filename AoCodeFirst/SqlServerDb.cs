@@ -93,7 +93,7 @@ namespace Postulate
 			}				 
 		}
 
-		public void QueryMultiple(string queries, object parameters, Action<GridReader, IDbConnection> action, CommandType commandType = CommandType.StoredProcedure)
+		public void QueryMultiple(string queries, object parameters, Action<GridReader> action, CommandType commandType = CommandType.StoredProcedure)
 		{
 			CommandDefinition cmdDef = new CommandDefinition(queries, parameters);
 
@@ -103,11 +103,11 @@ namespace Postulate
 				Profiler?.Start(cn, cmdDef);
 				GridReader grid = cn.QueryMultiple(new CommandDefinition(queries, parameters, commandType: commandType));
 				Profiler?.Stop(cn);
-				action.Invoke(grid, cn);
+				action.Invoke(grid);
 			}
 		}
 
-		public void QueryMultiple<T>(IEnumerable<QueryBase<T>> queries, object parameters, Action<GridReader, IDbConnection> action, CommandType commandType = CommandType.StoredProcedure)
+		public void QueryMultiple<T>(IEnumerable<QueryBase<T>> queries, object parameters, Action<GridReader> action, CommandType commandType = CommandType.StoredProcedure)
 		{
 			var queriesJoined = string.Join("\r\n", queries.Select(q => q.Sql + ";"));
 			QueryMultiple(queriesJoined, parameters, action, commandType);
