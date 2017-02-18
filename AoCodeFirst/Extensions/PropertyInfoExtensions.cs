@@ -48,6 +48,8 @@ namespace Postulate.Extensions
 			if (t.IsGenericType) t = t.GenericTypeArguments[0];
 			if (t.IsEnum) t = t.GetEnumUnderlyingType();
 
+			if (!typeMap.ContainsKey(t)) throw new KeyNotFoundException($"Type name {t.Name} not supported.");
+
 			return $"{typeMap[t]} {nullable}";
 		}
 
