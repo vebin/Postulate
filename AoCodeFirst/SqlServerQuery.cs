@@ -11,6 +11,15 @@ namespace Postulate
 		{
 		}
 
+		public IEnumerable<TResult> Execute()
+		{
+			using (SqlConnection cn = _db.GetConnection() as SqlConnection)
+			{
+				cn.Open();
+				return Execute(cn, this, this); // hack to cause current object to behave like passed-in criteria and ensure correct placement of AND/WHERE
+			}
+		}
+
 		public IEnumerable<TResult> Execute(object parameters, object criteria = null)
 		{
 			using (SqlConnection cn = _db.GetConnection() as SqlConnection)

@@ -1,4 +1,5 @@
-﻿using CodeFirstTest.Models;
+﻿using BlobBackupLib.Queries;
+using CodeFirstTest.Models;
 using Ginseng.Models;
 using Postulate.Merge;
 using System;
@@ -13,26 +14,12 @@ namespace CodeFirstTest
 	{
 		static void Main(string[] args)
 		{
-			GinsengDb db = new GinsengDb();
-
-			SchemaMerge sm = new SchemaMerge(typeof(GinsengDb));
-			//IEnumerable<SchemaMerge.Action> changes = null;		
-
-			using (SqlConnection cn = db.GetConnection() as SqlConnection)
+			var query = new LatestVersions(1);
+			query.Filename = "%shared%";			
+			var results = query.Execute();
+			foreach (var item in results)
 			{
-				cn.Open();
-				//changes = sm.Analyze(cn);
-				sm.SaveAs(cn, @"c:\users\adam\Desktop\changes.sql");
-			}
-
-			foreach (var a in sm.AllActions)
-			{
-				Console.WriteLine(a.ToString());
-				foreach (var cmd in sm.AllCommands[a])
-				{
-					Console.WriteLine(cmd);
-					Console.WriteLine();
-				}
+				Console.WriteLine(item.RestoreName);
 			}
 
 			Console.ReadLine();

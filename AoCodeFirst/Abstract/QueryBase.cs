@@ -12,7 +12,8 @@ namespace Postulate.Abstract
 	public abstract class QueryBase<TResult>
 	{
 		private readonly string _sql;
-		protected readonly SqlDb _db;		
+		protected readonly SqlDb _db;
+		protected DynamicParameters _builtInParams = new DynamicParameters();
 		
 		public QueryBase(string sql, SqlDb db)
 		{
@@ -42,6 +43,7 @@ namespace Postulate.Abstract
 		protected void BuildQuery(object parameters, object criteria, out string query, out DynamicParameters dp)
 		{
 			dp = new DynamicParameters(parameters);
+			if (_builtInParams.ParameterNames.Any()) dp.AddDynamicParams(_builtInParams);
 			query = _sql;
 
 			if (criteria != null)
